@@ -1,7 +1,10 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.DialPad" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    <!-- Base application theme for night mode. -->
+    <style name="Base.Theme.DialPad" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Keep light theme even in night mode for consistent dialer look -->
+        <item name="colorPrimary">@color/call_button_green</item>
+        <item name="android:statusBarColor">@color/background_light</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/dial_pad_bg</item>
     </style>
 </resources>

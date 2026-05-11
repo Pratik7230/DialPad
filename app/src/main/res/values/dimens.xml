@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dial pad dimensions -->
+    <dimen name="dial_button_size">72dp</dimen>
+    <dimen name="dial_number_size">28sp</dimen>
+    <dimen name="dial_sub_text_size">10sp</dimen>
+    <dimen name="dial_grid_spacing">8dp</dimen>
+    <dimen name="phone_display_text_size">34sp</dimen>
+    <dimen name="call_button_size">64dp</dimen>
+    <dimen name="call_icon_size">28dp</dimen>
+    <dimen name="action_icon_size">24dp</dimen>
+    <dimen name="dialpad_panel_radius">28dp</dimen>
+    <dimen name="bottom_action_row_height">64dp</dimen>
+</resources>
