@@ -458,8 +458,7 @@
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:src="@drawable/ic_backspace"
                     android:scaleType="centerInside"
-                    android:contentDescription="Delete"
-                    android:visibility="gone" />
+                    android:contentDescription="Delete" />
             </FrameLayout>
         </LinearLayout>
 

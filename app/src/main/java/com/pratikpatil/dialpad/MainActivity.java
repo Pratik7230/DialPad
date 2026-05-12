@@ -93,6 +93,8 @@ public class MainActivity extends AppCompatActivity {
 
             startActivity(intent);
         });
+
+        updateDisplay();
     }
 
     /**
@@ -117,17 +119,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Updates the phone number display and toggles delete button visibility.
+     * Updates the phone number display and toggles delete button enabled state.
      */
     private void updateDisplay() {
         String formatted = formatPhoneNumber(phoneNumber.toString());
         phoneNumberDisplay.setText(formatted);
 
-        // Show/hide delete button based on whether there's input
+        // Enable/disable delete button based on whether there's input
         if (phoneNumber.length() > 0) {
-            btnDelete.setVisibility(View.VISIBLE);
+            btnDelete.setEnabled(true);
+            btnDelete.setAlpha(1f);
         } else {
-            btnDelete.setVisibility(View.GONE);
+            btnDelete.setEnabled(false);
+            btnDelete.setAlpha(0.35f);
             phoneNumberDisplay.setText("");
         }
     }
