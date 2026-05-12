@@ -29,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
         phoneNumberDisplay = findViewById(R.id.phoneNumberDisplay);
         btnCall = findViewById(R.id.btnCall);
         btnDelete = findViewById(R.id.btnDelete);
+        View keyZero = findViewById(R.id.keyZero);
 
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_call);
@@ -56,6 +57,10 @@ public class MainActivity extends AppCompatActivity {
                 updateDisplay();
             }
         });
+
+        if (keyZero != null) {
+            keyZero.setOnLongClickListener(this::zeroLongClick);
+        }
 
         // Long press to clear all
         btnDelete.setOnLongClickListener(v -> {
@@ -100,6 +105,15 @@ public class MainActivity extends AppCompatActivity {
             phoneNumber.append(digit);
             updateDisplay();
         }
+    }
+
+    /**
+     * Long-press on zero inserts '+' for international numbers.
+     */
+    public boolean zeroLongClick(View view) {
+        phoneNumber.append("+");
+        updateDisplay();
+        return true;
     }
 
     /**

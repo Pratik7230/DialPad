@@ -352,6 +352,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/keyZero"
                 android:layout_width="0dp"
                 android:layout_height="@dimen/dial_button_size"
                 android:layout_weight="1"
