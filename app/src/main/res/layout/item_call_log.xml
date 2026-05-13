@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="20dp"
+    android:paddingVertical="14dp">
+
+    <!-- Call type icon -->
+    <ImageView
+        android:id="@+id/ivCallType"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:scaleType="centerInside"
+        android:contentDescription="Call type"
+        tools:src="@drawable/ic_call_incoming" />
+
+    <!-- Name and number section -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="16dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvCallerName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:textColor="@color/number_text_color"
+            android:textSize="16sp"
+            tools:text="John Doe" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvCallTypeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/sub_text_color"
+                android:textSize="13sp"
+                tools:text="Incoming" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="4dp"
+                android:text="·"
+                android:textColor="@color/sub_text_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tvCallDuration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/sub_text_color"
+                android:textSize="13sp"
+                tools:text="2 min 30 sec" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Date/time section -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvCallDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/sub_text_color"
+            android:textSize="13sp"
+            tools:text="Today" />
+
+        <TextView
+            android:id="@+id/tvCallTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/sub_text_color"
+            android:textSize="12sp"
+            tools:text="3:45 PM" />
+
+    </LinearLayout>
+
+</LinearLayout>

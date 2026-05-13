@@ -36,4 +36,17 @@
     <string name="sub_0">+</string>
     <string name="sub_star">,</string>
     <string name="sub_hash">;</string>
+
+    <!-- Call history strings -->
+    <string name="call_history_title">Recent Calls</string>
+    <string name="call_type_incoming">Incoming</string>
+    <string name="call_type_outgoing">Outgoing</string>
+    <string name="call_type_missed">Missed</string>
+    <string name="call_type_rejected">Rejected</string>
+    <string name="call_type_unknown">Unknown</string>
+    <string name="no_call_history">No recent calls</string>
+    <string name="no_call_history_subtitle">Your call history will appear here</string>
+    <string name="permission_call_log_title">Call log permission needed</string>
+    <string name="permission_call_log_message">Allow access to your call logs to see your recent call history</string>
+    <string name="grant_permission">Grant Permission</string>
 </resources>
