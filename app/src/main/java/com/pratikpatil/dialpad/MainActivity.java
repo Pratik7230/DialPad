@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CallLog;
@@ -35,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView phoneNumberDisplay;
     private ImageButton btnCall, btnDelete;
     private StringBuilder phoneNumber = new StringBuilder();
+    private ToneGenerator toneGenerator;
 
     // Call history views
     private ViewFlipper viewFlipper;
@@ -55,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
         btnCall = findViewById(R.id.btnCall);
         btnDelete = findViewById(R.id.btnDelete);
         View keyZero = findViewById(R.id.keyZero);
+        toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 80);
 
         // View flipper
         viewFlipper = findViewById(R.id.viewFlipper);
@@ -270,6 +274,7 @@ public class MainActivity extends AppCompatActivity {
     public void numberClick(View view) {
         String digit = (String) view.getTag();
         if (digit != null) {
+            playDialTone(digit);
             phoneNumber.append(digit);
             updateDisplay();
         }
@@ -319,5 +324,64 @@ public class MainActivity extends AppCompatActivity {
             formatted.append(number.charAt(i));
         }
         return formatted.toString();
+    }
+
+    private void playDialTone(String digit) {
+        if (toneGenerator == null) {
+            return;
+        }
+
+        int toneType;
+        switch (digit) {
+            case "0":
+                toneType = ToneGenerator.TONE_DTMF_0;
+                break;
+            case "1":
+                toneType = ToneGenerator.TONE_DTMF_1;
+                break;
+            case "2":
+                toneType = ToneGenerator.TONE_DTMF_2;
+                break;
+            case "3":
+                toneType = ToneGenerator.TONE_DTMF_3;
+                break;
+            case "4":
+                toneType = ToneGenerator.TONE_DTMF_4;
+                break;
+            case "5":
+                toneType = ToneGenerator.TONE_DTMF_5;
+                break;
+            case "6":
+                toneType = ToneGenerator.TONE_DTMF_6;
+                break;
+            case "7":
+                toneType = ToneGenerator.TONE_DTMF_7;
+                break;
+            case "8":
+                toneType = ToneGenerator.TONE_DTMF_8;
+                break;
+            case "9":
+                toneType = ToneGenerator.TONE_DTMF_9;
+                break;
+            case "*":
+                toneType = ToneGenerator.TONE_DTMF_S;
+                break;
+            case "#":
+                toneType = ToneGenerator.TONE_DTMF_P;
+                break;
+            default:
+                return;
+        }
+
+        toneGenerator.startTone(toneType, 120);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (toneGenerator != null) {
+            toneGenerator.release();
+            toneGenerator = null;
+        }
     }
 }
