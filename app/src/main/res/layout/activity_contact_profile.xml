@@ -41,7 +41,8 @@
             android:background="@drawable/bg_avatar_circle"
             android:contentDescription="@string/contact_profile_title"
             android:padding="16dp"
-            android:src="@drawable/ic_nav_contacts" />
+            android:src="@drawable/ic_nav_contacts"
+            android:clipToOutline="true" />
 
     </LinearLayout>
 

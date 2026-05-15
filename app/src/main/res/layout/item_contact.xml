@@ -27,7 +27,9 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:scaleType="centerCrop"
-            android:contentDescription="Contact photo" />
+            android:contentDescription="Contact photo"
+            android:background="@drawable/bg_avatar_circle"
+            android:clipToOutline="true" />
 
         <!-- Letter avatar (when no photo) -->
         <TextView
