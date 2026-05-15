@@ -59,7 +59,14 @@
     <string name="action_call">Call</string>
     <string name="action_message">Message</string>
     <string name="unknown_number">Unknown number</string>
+    <string name="unknown_contact">Unknown contact</string>
     <string name="back">Back</string>
     <string name="call_permission_denied">Call permission denied</string>
     <string name="no_message_app">No messaging app found</string>
+    <string name="contact_action_unavailable">Contact app not available</string>
+    <string name="action_new">New</string>
+    <string name="action_existing">Existing</string>
+    <string name="action_flag">Flag</string>
+    <string name="country_india">India</string>
+    <string name="flag_action_coming_soon">Flag coming soon</string>
 </resources>

@@ -8,6 +8,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CallLog;
+import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageButton;
@@ -37,12 +38,18 @@ public class ContactProfileActivity extends AppCompatActivity {
 
     private TextView tvContactName;
     private TextView tvContactNumber;
+    private TextView tvContactRegion;
+    private LinearLayout contactNumberRow;
     private RecyclerView rvCallHistory;
     private LinearLayout emptyState;
     private LinearLayout permissionState;
     private MaterialButton btnGrantPermission;
-    private MaterialButton btnCall;
-    private MaterialButton btnMessage;
+    private ImageButton btnCall;
+    private ImageButton btnMessage;
+    private LinearLayout unsavedActionsContainer;
+    private TextView actionNew;
+    private TextView actionExisting;
+    private TextView actionFlag;
 
     private CallLogAdapter callLogAdapter;
     private final List<CallLogEntry> callLogEntries = new ArrayList<>();
@@ -62,8 +69,14 @@ public class ContactProfileActivity extends AppCompatActivity {
         ImageButton btnBack = findViewById(R.id.btnBack);
         tvContactName = findViewById(R.id.tvContactName);
         tvContactNumber = findViewById(R.id.tvContactNumber);
+        tvContactRegion = findViewById(R.id.tvContactRegion);
+        contactNumberRow = findViewById(R.id.contactNumberRow);
         btnCall = findViewById(R.id.btnCallContact);
         btnMessage = findViewById(R.id.btnMessageContact);
+        unsavedActionsContainer = findViewById(R.id.unsavedActionsContainer);
+        actionNew = findViewById(R.id.actionNew);
+        actionExisting = findViewById(R.id.actionExisting);
+        actionFlag = findViewById(R.id.actionFlag);
 
         rvCallHistory = findViewById(R.id.rvContactCallHistory);
         emptyState = findViewById(R.id.emptyState);
@@ -77,6 +90,10 @@ public class ContactProfileActivity extends AppCompatActivity {
         btnCall.setOnClickListener(v -> placeCall());
         btnMessage.setOnClickListener(v -> sendMessage());
 
+        actionNew.setOnClickListener(v -> addNewContact());
+        actionExisting.setOnClickListener(v -> addToExistingContact());
+        actionFlag.setOnClickListener(v -> Toast.makeText(this, R.string.flag_action_coming_soon, Toast.LENGTH_SHORT).show());
+
         callLogAdapter = new CallLogAdapter(callLogEntries, null, false);
         rvCallHistory.setLayoutManager(new LinearLayoutManager(this));
         rvCallHistory.setAdapter(callLogAdapter);
@@ -87,29 +104,61 @@ public class ContactProfileActivity extends AppCompatActivity {
     }
 
     private void updateHeader() {
-        String displayName;
-        if (!TextUtils.isEmpty(contactName)) {
-            displayName = contactName;
-        } else if (!TextUtils.isEmpty(phoneNumber)) {
-            displayName = phoneNumber;
+        boolean hasNumber = !TextUtils.isEmpty(phoneNumber);
+        boolean isUnknownContact = TextUtils.isEmpty(contactName);
+
+        if (isUnknownContact) {
+            tvContactName.setText(R.string.unknown_contact);
         } else {
-            displayName = getString(R.string.unknown_number);
+            tvContactName.setText(contactName);
         }
 
-        tvContactName.setText(displayName);
-
-        if (!TextUtils.isEmpty(phoneNumber)) {
+        if (hasNumber) {
             tvContactNumber.setVisibility(View.VISIBLE);
             tvContactNumber.setText(phoneNumber);
+            contactNumberRow.setVisibility(View.VISIBLE);
         } else {
             tvContactNumber.setVisibility(View.GONE);
+            contactNumberRow.setVisibility(View.GONE);
         }
 
-        boolean hasNumber = !TextUtils.isEmpty(phoneNumber);
+        if (unsavedActionsContainer != null) {
+            unsavedActionsContainer.setVisibility(isUnknownContact && hasNumber ? View.VISIBLE : View.GONE);
+        }
+
+        updateRegionLabel();
+
         btnCall.setEnabled(hasNumber);
         btnMessage.setEnabled(hasNumber);
         btnCall.setAlpha(hasNumber ? 1f : 0.4f);
         btnMessage.setAlpha(hasNumber ? 1f : 0.4f);
+    }
+
+    private void updateRegionLabel() {
+        if (tvContactRegion == null) {
+            return;
+        }
+
+        String region = getRegionLabel(phoneNumber);
+        if (TextUtils.isEmpty(region)) {
+            tvContactRegion.setVisibility(View.GONE);
+        } else {
+            tvContactRegion.setVisibility(View.VISIBLE);
+            tvContactRegion.setText(region);
+        }
+    }
+
+    private String getRegionLabel(String number) {
+        if (TextUtils.isEmpty(number)) {
+            return null;
+        }
+
+        String compact = number.replace(" ", "").replace("-", "");
+        if (compact.startsWith("+91")) {
+            return getString(R.string.country_india);
+        }
+
+        return null;
     }
 
     private void placeCall() {
@@ -147,6 +196,38 @@ public class ContactProfileActivity extends AppCompatActivity {
             startActivity(intent);
         } catch (ActivityNotFoundException e) {
             Toast.makeText(this, R.string.no_message_app, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void addNewContact() {
+        if (TextUtils.isEmpty(phoneNumber)) {
+            return;
+        }
+
+        Intent intent = new Intent(ContactsContract.Intents.Insert.ACTION);
+        intent.setType(ContactsContract.RawContacts.CONTENT_TYPE);
+        intent.putExtra(ContactsContract.Intents.Insert.PHONE, phoneNumber);
+
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.contact_action_unavailable, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void addToExistingContact() {
+        if (TextUtils.isEmpty(phoneNumber)) {
+            return;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_INSERT_OR_EDIT);
+        intent.setType(ContactsContract.Contacts.CONTENT_ITEM_TYPE);
+        intent.putExtra(ContactsContract.Intents.Insert.PHONE, phoneNumber);
+
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.contact_action_unavailable, Toast.LENGTH_SHORT).show();
         }
     }
 

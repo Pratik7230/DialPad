@@ -23,16 +23,6 @@
             android:contentDescription="@string/back"
             android:src="@drawable/ic_arrow_back" />
 
-        <TextView
-            android:id="@+id/tvProfileTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="4dp"
-            android:fontFamily="sans-serif-medium"
-            android:text="@string/contact_profile_title"
-            android:textColor="@color/number_text_color"
-            android:textSize="18sp" />
-
     </LinearLayout>
 
     <LinearLayout
@@ -42,7 +32,7 @@
         android:orientation="horizontal"
         android:paddingHorizontal="20dp"
         android:paddingTop="12dp"
-        android:paddingBottom="4dp">
+        android:paddingBottom="8dp">
 
         <ImageView
             android:id="@+id/ivAvatar"
@@ -53,76 +43,132 @@
             android:padding="16dp"
             android:src="@drawable/ic_nav_contacts" />
 
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvContactName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="20dp"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="@color/number_text_color"
+        android:textSize="28sp" />
+
+    <LinearLayout
+        android:id="@+id/contactNumberRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvContactName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="@color/number_text_color"
-                android:textSize="24sp" />
 
             <TextView
                 android:id="@+id/tvContactNumber"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:textColor="@color/number_text_color"
+                android:textSize="18sp" />
+
+            <TextView
+                android:id="@+id/tvContactRegion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
                 android:textColor="@color/sub_text_color"
-                android:textSize="16sp" />
+                android:textSize="14sp"
+                android:visibility="gone" />
 
         </LinearLayout>
 
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingHorizontal="20dp">
-
-        <com.google.android.material.button.MaterialButton
+        <ImageButton
             android:id="@+id/btnCallContact"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/action_call"
-            android:textColor="@color/white"
-            app:backgroundTint="@color/call_button_green" />
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_action_circle_green"
+            android:contentDescription="@string/action_call"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_call_white" />
 
-        <com.google.android.material.button.MaterialButton
+        <ImageButton
             android:id="@+id/btnMessageContact"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:text="@string/action_message"
-            android:textColor="@color/white"
-            app:backgroundTint="@color/bottom_nav_active" />
+            android:background="@drawable/bg_action_circle_blue"
+            android:contentDescription="@string/action_message"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_message_white" />
 
     </LinearLayout>
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
-        android:paddingHorizontal="20dp"
-        android:text="@string/call_history_label"
-        android:textColor="@color/sub_text_color"
-        android:textSize="14sp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="8dp"
         android:background="@color/divider_color" />
+
+    <LinearLayout
+        android:id="@+id/unsavedActionsContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/actionNew"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:paddingVertical="12dp"
+            android:text="@string/action_new"
+            android:textColor="@color/bottom_nav_active"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/actionExisting"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:paddingVertical="12dp"
+            android:text="@string/action_existing"
+            android:textColor="@color/bottom_nav_active"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/actionFlag"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:paddingVertical="12dp"
+            android:text="@string/action_flag"
+            android:textColor="@color/bottom_nav_active"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/divider_color" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:paddingHorizontal="20dp"
+        android:text="@string/call_history_label"
+        android:textColor="@color/sub_text_color"
+        android:textSize="14sp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvContactCallHistory"
