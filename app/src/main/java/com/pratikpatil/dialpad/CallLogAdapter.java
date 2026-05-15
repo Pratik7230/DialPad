@@ -4,6 +4,7 @@ import android.provider.CallLog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -25,17 +26,25 @@ public class CallLogAdapter extends RecyclerView.Adapter<CallLogAdapter.ViewHold
     /**
      * Listener for click events on call log items.
      */
-    public interface OnItemClickListener {
+    public interface OnItemActionListener {
         void onItemClick(CallLogEntry entry);
+
+        void onDeleteClick(CallLogEntry entry);
     }
 
     private List<CallLogEntry> callLogs;
-    private OnItemClickListener listener;
+    private OnItemActionListener listener;
+    private boolean showDelete;
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm a", Locale.getDefault());
 
-    public CallLogAdapter(List<CallLogEntry> callLogs, OnItemClickListener listener) {
+    public CallLogAdapter(List<CallLogEntry> callLogs, OnItemActionListener listener) {
+        this(callLogs, listener, true);
+    }
+
+    public CallLogAdapter(List<CallLogEntry> callLogs, OnItemActionListener listener, boolean showDelete) {
         this.callLogs = callLogs;
         this.listener = listener;
+        this.showDelete = showDelete;
     }
 
     @NonNull
@@ -95,11 +104,25 @@ public class CallLogAdapter extends RecyclerView.Adapter<CallLogAdapter.ViewHold
         holder.tvCallTime.setText(timeFormat.format(new Date(entry.getDate())));
 
         // Click listener to dial the number
-        holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onItemClick(entry);
-            }
-        });
+        if (listener != null) {
+            holder.itemView.setClickable(true);
+            holder.itemView.setOnClickListener(v -> listener.onItemClick(entry));
+        } else {
+            holder.itemView.setClickable(false);
+            holder.itemView.setOnClickListener(null);
+        }
+
+        if (showDelete) {
+            holder.btnDeleteLog.setVisibility(View.VISIBLE);
+            holder.btnDeleteLog.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onDeleteClick(entry);
+                }
+            });
+        } else {
+            holder.btnDeleteLog.setVisibility(View.GONE);
+            holder.btnDeleteLog.setOnClickListener(null);
+        }
     }
 
     @Override
@@ -169,6 +192,7 @@ public class CallLogAdapter extends RecyclerView.Adapter<CallLogAdapter.ViewHold
         TextView tvCallDuration;
         TextView tvCallDate;
         TextView tvCallTime;
+        ImageButton btnDeleteLog;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -178,6 +202,7 @@ public class CallLogAdapter extends RecyclerView.Adapter<CallLogAdapter.ViewHold
             tvCallDuration = itemView.findViewById(R.id.tvCallDuration);
             tvCallDate = itemView.findViewById(R.id.tvCallDate);
             tvCallTime = itemView.findViewById(R.id.tvCallTime);
+            btnDeleteLog = itemView.findViewById(R.id.btnDeleteLog);
         }
     }
 }

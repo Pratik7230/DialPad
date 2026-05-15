@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_CALL_PHONE = 1;
     private static final int REQUEST_READ_CALL_LOG = 2;
+    private static final int REQUEST_WRITE_CALL_LOG = 3;
 
     private TextView phoneNumberDisplay;
     private ImageButton btnCall, btnDelete;
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
     private MaterialButton btnGrantPermission;
     private CallLogAdapter callLogAdapter;
     private List<CallLogEntry> callLogEntries = new ArrayList<>();
+    private CallLogEntry pendingDeleteEntry;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,14 +72,16 @@ public class MainActivity extends AppCompatActivity {
         btnGrantPermission = findViewById(R.id.btnGrantPermission);
 
         // Setup call history RecyclerView
-        callLogAdapter = new CallLogAdapter(callLogEntries, entry -> {
-            // Tapping a call log entry dials that number
-            phoneNumber.setLength(0);
-            phoneNumber.append(entry.getNumber());
-            updateDisplay();
-            viewFlipper.setDisplayedChild(0); // Switch to dialpad
-            BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
-            bottomNav.setSelectedItemId(R.id.nav_call);
+        callLogAdapter = new CallLogAdapter(callLogEntries, new CallLogAdapter.OnItemActionListener() {
+            @Override
+            public void onItemClick(CallLogEntry entry) {
+                openContactProfile(entry);
+            }
+
+            @Override
+            public void onDeleteClick(CallLogEntry entry) {
+                handleDeleteCallLog(entry);
+            }
         });
         rvCallHistory.setLayoutManager(new LinearLayoutManager(this));
         rvCallHistory.setAdapter(callLogAdapter);
@@ -157,6 +161,17 @@ public class MainActivity extends AppCompatActivity {
         updateDisplay();
     }
 
+    private void openContactProfile(CallLogEntry entry) {
+        if (entry == null) {
+            return;
+        }
+
+        Intent intent = new Intent(this, ContactProfileActivity.class);
+        intent.putExtra(ContactProfileActivity.EXTRA_NUMBER, entry.getNumber());
+        intent.putExtra(ContactProfileActivity.EXTRA_NAME, entry.getName());
+        startActivity(intent);
+    }
+
     /**
      * Loads call history from the device. Shows permission state if not granted.
      */
@@ -176,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
         callLogEntries.clear();
 
         String[] projection = {
+            CallLog.Calls._ID,
                 CallLog.Calls.NUMBER,
                 CallLog.Calls.CACHED_NAME,
                 CallLog.Calls.TYPE,
@@ -191,6 +207,7 @@ public class MainActivity extends AppCompatActivity {
                 CallLog.Calls.DATE + " DESC")) {
 
             if (cursor != null) {
+                int idIdx = cursor.getColumnIndex(CallLog.Calls._ID);
                 int numberIdx = cursor.getColumnIndex(CallLog.Calls.NUMBER);
                 int nameIdx = cursor.getColumnIndex(CallLog.Calls.CACHED_NAME);
                 int typeIdx = cursor.getColumnIndex(CallLog.Calls.TYPE);
@@ -201,13 +218,14 @@ public class MainActivity extends AppCompatActivity {
                 int maxEntries = 100; // Limit to recent 100 entries
 
                 while (cursor.moveToNext() && count < maxEntries) {
+                    long id = idIdx != -1 ? cursor.getLong(idIdx) : 0L;
                     String number = cursor.getString(numberIdx);
                     String name = cursor.getString(nameIdx);
                     int type = cursor.getInt(typeIdx);
                     long date = cursor.getLong(dateIdx);
                     long duration = cursor.getLong(durationIdx);
 
-                    callLogEntries.add(new CallLogEntry(number, name, type, date, duration));
+                    callLogEntries.add(new CallLogEntry(id, number, name, type, date, duration));
                     count++;
                 }
             }
@@ -221,13 +239,7 @@ public class MainActivity extends AppCompatActivity {
 
         callLogAdapter.updateData(callLogEntries);
 
-        if (callLogEntries.isEmpty()) {
-            rvCallHistory.setVisibility(View.GONE);
-            emptyState.setVisibility(View.VISIBLE);
-        } else {
-            rvCallHistory.setVisibility(View.VISIBLE);
-            emptyState.setVisibility(View.GONE);
-        }
+        updateHistoryVisibility();
     }
 
     /**
@@ -240,6 +252,68 @@ public class MainActivity extends AppCompatActivity {
                 REQUEST_READ_CALL_LOG);
     }
 
+    private void handleDeleteCallLog(CallLogEntry entry) {
+        if (entry == null) {
+            return;
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_CALL_LOG)
+                != PackageManager.PERMISSION_GRANTED) {
+            pendingDeleteEntry = entry;
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{Manifest.permission.WRITE_CALL_LOG},
+                    REQUEST_WRITE_CALL_LOG);
+            return;
+        }
+
+        deleteCallLogEntry(entry);
+    }
+
+    private void deleteCallLogEntry(CallLogEntry entry) {
+        if (entry.getId() <= 0) {
+            Toast.makeText(this, R.string.delete_call_log_failed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            int rows = getContentResolver().delete(
+                    CallLog.Calls.CONTENT_URI,
+                    CallLog.Calls._ID + "=?",
+                    new String[]{String.valueOf(entry.getId())});
+
+            if (rows > 0) {
+                removeEntryById(entry.getId());
+                callLogAdapter.updateData(callLogEntries);
+                updateHistoryVisibility();
+                Toast.makeText(this, R.string.delete_call_log_success, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, R.string.delete_call_log_failed, Toast.LENGTH_SHORT).show();
+            }
+        } catch (SecurityException e) {
+            Toast.makeText(this, R.string.delete_call_log_failed, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void removeEntryById(long id) {
+        for (int i = 0; i < callLogEntries.size(); i++) {
+            if (callLogEntries.get(i).getId() == id) {
+                callLogEntries.remove(i);
+                break;
+            }
+        }
+    }
+
+    private void updateHistoryVisibility() {
+        if (callLogEntries.isEmpty()) {
+            rvCallHistory.setVisibility(View.GONE);
+            emptyState.setVisibility(View.VISIBLE);
+        } else {
+            rvCallHistory.setVisibility(View.VISIBLE);
+            emptyState.setVisibility(View.GONE);
+        }
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
@@ -250,6 +324,16 @@ public class MainActivity extends AppCompatActivity {
                 loadCallHistory();
             } else {
                 Toast.makeText(this, "Call log permission denied", Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_WRITE_CALL_LOG) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (pendingDeleteEntry != null) {
+                    deleteCallLogEntry(pendingDeleteEntry);
+                    pendingDeleteEntry = null;
+                }
+            } else {
+                pendingDeleteEntry = null;
+                Toast.makeText(this, R.string.delete_call_log_permission_denied, Toast.LENGTH_SHORT).show();
             }
         } else if (requestCode == REQUEST_CALL_PHONE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

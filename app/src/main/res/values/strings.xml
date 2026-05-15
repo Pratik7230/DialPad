@@ -49,4 +49,8 @@
     <string name="permission_call_log_title">Call log permission needed</string>
     <string name="permission_call_log_message">Allow access to your call logs to see your recent call history</string>
     <string name="grant_permission">Grant Permission</string>
+    <string name="delete_call_log">Delete call</string>
+    <string name="delete_call_log_success">Call deleted</string>
+    <string name="delete_call_log_failed">Unable to delete call</string>
+    <string name="delete_call_log_permission_denied">Call log write permission denied</string>
 </resources>

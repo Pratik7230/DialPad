@@ -5,18 +5,24 @@ package com.pratikpatil.dialpad;
  */
 public class CallLogEntry {
 
+    private long id;
     private String number;
     private String name;
     private int callType; // CallLog.Calls.INCOMING_TYPE, OUTGOING_TYPE, MISSED_TYPE
     private long date;
     private long duration; // in seconds
 
-    public CallLogEntry(String number, String name, int callType, long date, long duration) {
+    public CallLogEntry(long id, String number, String name, int callType, long date, long duration) {
+        this.id = id;
         this.number = number;
         this.name = name;
         this.callType = callType;
         this.date = date;
         this.duration = duration;
+    }
+
+    public long getId() {
+        return id;
     }
 
     public String getNumber() {

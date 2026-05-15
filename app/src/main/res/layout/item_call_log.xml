@@ -73,29 +73,47 @@
 
     </LinearLayout>
 
-    <!-- Date/time section -->
+    <!-- Date/time section + delete action -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:gravity="end"
-        android:orientation="vertical">
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/tvCallDate"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/sub_text_color"
-            android:textSize="13sp"
-            tools:text="Today" />
+            android:gravity="end"
+            android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvCallTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:textColor="@color/sub_text_color"
-            android:textSize="12sp"
-            tools:text="3:45 PM" />
+            <TextView
+                android:id="@+id/tvCallDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/sub_text_color"
+                android:textSize="13sp"
+                tools:text="Today" />
+
+            <TextView
+                android:id="@+id/tvCallTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/sub_text_color"
+                android:textSize="12sp"
+                tools:text="3:45 PM" />
+
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnDeleteLog"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginStart="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/delete_call_log"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_delete" />
 
     </LinearLayout>
 
