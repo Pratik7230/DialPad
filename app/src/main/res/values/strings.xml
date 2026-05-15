@@ -49,8 +49,17 @@
     <string name="permission_call_log_title">Call log permission needed</string>
     <string name="permission_call_log_message">Allow access to your call logs to see your recent call history</string>
     <string name="grant_permission">Grant Permission</string>
+    <string name="permission_call_log_denied">Call log permission denied</string>
     <string name="delete_call_log">Delete call</string>
     <string name="delete_call_log_success">Call deleted</string>
     <string name="delete_call_log_failed">Unable to delete call</string>
     <string name="delete_call_log_permission_denied">Call log write permission denied</string>
+    <string name="contact_profile_title">Contact</string>
+    <string name="call_history_label">Call history</string>
+    <string name="action_call">Call</string>
+    <string name="action_message">Message</string>
+    <string name="unknown_number">Unknown number</string>
+    <string name="back">Back</string>
+    <string name="call_permission_denied">Call permission denied</string>
+    <string name="no_message_app">No messaging app found</string>
 </resources>
