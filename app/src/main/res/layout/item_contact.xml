@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="20dp"
+    android:paddingEnd="12dp"
+    android:paddingVertical="10dp">
+
+    <!-- Avatar container -->
+    <FrameLayout
+        android:layout_width="48dp"
+        android:layout_height="48dp">
+
+        <!-- Avatar background circle -->
+        <View
+            android:id="@+id/ivAvatarBg"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_avatar_circle" />
+
+        <!-- Contact photo (if available) -->
+        <ImageView
+            android:id="@+id/ivContactAvatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="Contact photo" />
+
+        <!-- Letter avatar (when no photo) -->
+        <TextView
+            android:id="@+id/tvAvatarLetter"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:fontFamily="sans-serif-medium" />
+
+    </FrameLayout>
+
+    <!-- Contact info -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="14dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvContactName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:textColor="@color/number_text_color"
+                android:textSize="16sp" />
+
+            <ImageView
+                android:id="@+id/ivStarred"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginStart="6dp"
+                android:src="@drawable/ic_star_filled"
+                android:contentDescription="Favorite contact"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvContactNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/sub_text_color"
+            android:textSize="13sp" />
+
+    </LinearLayout>
+
+    <!-- Quick action: Call -->
+    <ImageButton
+        android:id="@+id/btnContactCall"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Call"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_contact_call"
+        android:padding="8dp" />
+
+    <!-- Quick action: Message -->
+    <ImageButton
+        android:id="@+id/btnContactMessage"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Message"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_contact_message"
+        android:padding="8dp" />
+
+</LinearLayout>

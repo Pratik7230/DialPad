@@ -482,6 +482,9 @@
         <!-- Child 1: Call History View (included layout) -->
         <include layout="@layout/layout_call_history" />
 
+        <!-- Child 2: Contacts View (included layout) -->
+        <include layout="@layout/layout_contacts" />
+
     </ViewFlipper>
 
     <!-- Bottom Navigation -->

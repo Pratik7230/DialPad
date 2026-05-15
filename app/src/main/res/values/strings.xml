@@ -69,4 +69,17 @@
     <string name="action_flag">Flag</string>
     <string name="country_india">India</string>
     <string name="flag_action_coming_soon">Flag coming soon</string>
+
+    <!-- Contacts section strings -->
+    <string name="contacts_title">Contacts</string>
+    <string name="search_contacts_hint">Search contacts…</string>
+    <string name="clear_search">Clear search</string>
+    <string name="no_contacts">No contacts found</string>
+    <string name="no_contacts_subtitle">Your saved contacts will appear here</string>
+    <string name="no_search_results">No results found</string>
+    <string name="no_search_results_subtitle">Try a different search term</string>
+    <string name="permission_contacts_title">Contacts permission needed</string>
+    <string name="permission_contacts_message">Allow access to your contacts to see your saved contacts</string>
+    <string name="permission_contacts_denied">Contacts permission denied</string>
+    <string name="contacts_count_format">%d contacts</string>
 </resources>
