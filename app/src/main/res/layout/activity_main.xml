@@ -6,463 +6,483 @@
     android:background="@color/background_light"
     android:orientation="vertical">
 
-    <!-- Top section: Phone number display -->
-    <LinearLayout
+    <!-- ViewFlipper to switch between Dialpad and History -->
+    <ViewFlipper
+        android:id="@+id/viewFlipper"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:paddingHorizontal="32dp">
+        android:layout_weight="1">
 
-        <TextView
-            android:id="@+id/phoneNumberDisplay"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-light"
-            android:gravity="center"
-            android:hint="@string/phone_hint"
-            android:maxLines="1"
-            android:textColor="@color/phone_display_text"
-            android:textColorHint="@color/phone_display_hint"
-            android:textSize="@dimen/phone_display_text_size"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="18sp"
-            android:autoSizeMaxTextSize="34sp"
-            android:autoSizeStepGranularity="1sp" />
-
-    </LinearLayout>
-
-    <!-- Dial pad panel with rounded top corners -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_dialpad_panel"
-        android:orientation="vertical"
-        android:paddingTop="20dp"
-        android:paddingBottom="4dp">
-
-        <!-- Row 1: 1 2 3 -->
+        <!-- Child 0: Dialpad View -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
+            <!-- Top section: Phone number display -->
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
                 android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
                 android:gravity="center"
-                android:onClick="numberClick"
                 android:orientation="vertical"
-                android:tag="1">
+                android:paddingHorizontal="32dp">
+
                 <TextView
-                    android:layout_width="wrap_content"
+                    android:id="@+id/phoneNumberDisplay"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/dial_1"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_1"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif" />
+                    android:fontFamily="sans-serif-light"
+                    android:gravity="center"
+                    android:hint="@string/phone_hint"
+                    android:maxLines="1"
+                    android:textColor="@color/phone_display_text"
+                    android:textColorHint="@color/phone_display_hint"
+                    android:textSize="@dimen/phone_display_text_size"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="18sp"
+                    android:autoSizeMaxTextSize="34sp"
+                    android:autoSizeStepGranularity="1sp" />
+
             </LinearLayout>
 
+            <!-- Dial pad panel with rounded top corners -->
             <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialpad_panel"
                 android:orientation="vertical"
-                android:tag="2">
-                <TextView
-                    android:layout_width="wrap_content"
+                android:paddingTop="20dp"
+                android:paddingBottom="4dp">
+
+                <!-- Row 1: 1 2 3 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/dial_2"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="1">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_1"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_1"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="2">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_2"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_2"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="0.15" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="3">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_3"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_3"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="0.15" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Row 2: 4 5 6 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/sub_2"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif"
-                    android:letterSpacing="0.15" />
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="4">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_4"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_4"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="0.15" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="5">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_5"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_5"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="0.15" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="6">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_6"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_6"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="0.15" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Row 3: 7 8 9 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="7">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_7"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_7"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="0.15" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="8">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_8"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_8"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="0.15" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="9">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_9"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_9"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif"
+                            android:letterSpacing="0.15" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Row 4: * 0 # -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="*">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_star"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_star"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/keyZero"
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="0">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_0"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_0"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="@dimen/dial_button_size"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_dial_button_ripple"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:onClick="numberClick"
+                        android:orientation="vertical"
+                        android:tag="#">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/dial_hash"
+                            android:textColor="@color/number_text_color"
+                            android:textSize="@dimen/dial_number_size"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/sub_hash"
+                            android:textColor="@color/sub_text_color"
+                            android:textSize="@dimen/dial_sub_text_size"
+                            android:fontFamily="sans-serif" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- Bottom action row: dialpad icon | call button | delete button -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/bottom_action_row_height"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <!-- Dialpad icon (left) -->
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+                        <ImageView
+                            android:layout_width="@dimen/action_icon_size"
+                            android:layout_height="@dimen/action_icon_size"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_dialpad"
+                            android:contentDescription="Dialpad" />
+                    </FrameLayout>
+
+                    <!-- Call button (center) -->
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+                        <ImageButton
+                            android:id="@+id/btnCall"
+                            android:layout_width="@dimen/call_button_size"
+                            android:layout_height="@dimen/call_button_size"
+                            android:layout_gravity="center"
+                            android:background="@drawable/bg_call_button"
+                            android:src="@drawable/ic_call_white"
+                            android:scaleType="centerInside"
+                            android:contentDescription="Call" />
+                    </FrameLayout>
+
+                    <!-- Delete button (right) -->
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1">
+                        <ImageButton
+                            android:id="@+id/btnDelete"
+                            android:layout_width="48dp"
+                            android:layout_height="48dp"
+                            android:layout_gravity="center"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_backspace"
+                            android:scaleType="centerInside"
+                            android:contentDescription="Delete" />
+                    </FrameLayout>
+                </LinearLayout>
+
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="3">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_3"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_3"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif"
-                    android:letterSpacing="0.15" />
-            </LinearLayout>
         </LinearLayout>
 
-        <!-- Row 2: 4 5 6 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
+        <!-- Child 1: Call History View (included layout) -->
+        <include layout="@layout/layout_call_history" />
 
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="4">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_4"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_4"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif"
-                    android:letterSpacing="0.15" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="5">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_5"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_5"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif"
-                    android:letterSpacing="0.15" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="6">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_6"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_6"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif"
-                    android:letterSpacing="0.15" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Row 3: 7 8 9 -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="7">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_7"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_7"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif"
-                    android:letterSpacing="0.15" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="8">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_8"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_8"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif"
-                    android:letterSpacing="0.15" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="9">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_9"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_9"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif"
-                    android:letterSpacing="0.15" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Row 4: * 0 # -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="*">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_star"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_star"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/keyZero"
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="0">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_0"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_0"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="@dimen/dial_button_size"
-                android:layout_weight="1"
-                android:background="@drawable/bg_dial_button_ripple"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:onClick="numberClick"
-                android:orientation="vertical"
-                android:tag="#">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/dial_hash"
-                    android:textColor="@color/number_text_color"
-                    android:textSize="@dimen/dial_number_size"
-                    android:fontFamily="sans-serif" />
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/sub_hash"
-                    android:textColor="@color/sub_text_color"
-                    android:textSize="@dimen/dial_sub_text_size"
-                    android:fontFamily="sans-serif" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <!-- Bottom action row: dialpad icon | call button | delete button -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/bottom_action_row_height"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="4dp"
-            android:gravity="center"
-            android:orientation="horizontal">
-
-            <!-- Dialpad icon (left) -->
-            <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                <ImageView
-                    android:layout_width="@dimen/action_icon_size"
-                    android:layout_height="@dimen/action_icon_size"
-                    android:layout_gravity="center"
-                    android:src="@drawable/ic_dialpad"
-                    android:contentDescription="Dialpad" />
-            </FrameLayout>
-
-            <!-- Call button (center) -->
-            <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                <ImageButton
-                    android:id="@+id/btnCall"
-                    android:layout_width="@dimen/call_button_size"
-                    android:layout_height="@dimen/call_button_size"
-                    android:layout_gravity="center"
-                    android:background="@drawable/bg_call_button"
-                    android:src="@drawable/ic_call_white"
-                    android:scaleType="centerInside"
-                    android:contentDescription="Call" />
-            </FrameLayout>
-
-            <!-- Delete button (right) -->
-            <FrameLayout
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1">
-                <ImageButton
-                    android:id="@+id/btnDelete"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_gravity="center"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@drawable/ic_backspace"
-                    android:scaleType="centerInside"
-                    android:contentDescription="Delete" />
-            </FrameLayout>
-        </LinearLayout>
-
-    </LinearLayout>
+    </ViewFlipper>
 
     <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
