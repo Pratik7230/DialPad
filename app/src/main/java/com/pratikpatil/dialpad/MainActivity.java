@@ -1,6 +1,7 @@
 package com.pratikpatil.dialpad;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -9,7 +10,13 @@ import android.media.ToneGenerator;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CallLog;
+import android.provider.ContactsContract;
+import android.text.Editable;
+import android.text.TextUtils;
+import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -27,6 +34,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -34,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CALL_PHONE = 1;
     private static final int REQUEST_READ_CALL_LOG = 2;
     private static final int REQUEST_WRITE_CALL_LOG = 3;
+    private static final int REQUEST_READ_CONTACTS = 4;
 
     private TextView phoneNumberDisplay;
     private ImageButton btnCall, btnDelete;
@@ -49,6 +58,20 @@ public class MainActivity extends AppCompatActivity {
     private CallLogAdapter callLogAdapter;
     private List<CallLogEntry> callLogEntries = new ArrayList<>();
     private CallLogEntry pendingDeleteEntry;
+
+    // Contacts views
+    private RecyclerView rvContacts;
+    private LinearLayout contactsEmptyState;
+    private LinearLayout contactsPermissionState;
+    private MaterialButton btnGrantContactsPermission;
+    private EditText etSearchContacts;
+    private ImageButton btnClearSearch;
+    private TextView tvContactCount;
+    private LinearLayout alphabetScroller;
+    private ContactsAdapter contactsAdapter;
+    private List<ContactEntry> allContacts = new ArrayList<>();
+    private List<ContactEntry> filteredContacts = new ArrayList<>();
+    private String pendingCallNumber;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +112,57 @@ public class MainActivity extends AppCompatActivity {
         // Grant permission button
         btnGrantPermission.setOnClickListener(v -> requestCallLogPermission());
 
+        // ===== Contacts setup =====
+        rvContacts = findViewById(R.id.rvContacts);
+        contactsEmptyState = findViewById(R.id.contactsEmptyState);
+        contactsPermissionState = findViewById(R.id.contactsPermissionState);
+        btnGrantContactsPermission = findViewById(R.id.btnGrantContactsPermission);
+        etSearchContacts = findViewById(R.id.etSearchContacts);
+        btnClearSearch = findViewById(R.id.btnClearSearch);
+        tvContactCount = findViewById(R.id.tvContactCount);
+        alphabetScroller = findViewById(R.id.alphabetScroller);
+
+        contactsAdapter = new ContactsAdapter(new ContactsAdapter.OnContactActionListener() {
+            @Override
+            public void onContactClick(ContactEntry contact) {
+                openContactProfileFromContact(contact);
+            }
+
+            @Override
+            public void onCallClick(ContactEntry contact) {
+                callContact(contact);
+            }
+
+            @Override
+            public void onMessageClick(ContactEntry contact) {
+                messageContact(contact);
+            }
+        });
+        rvContacts.setLayoutManager(new LinearLayoutManager(this));
+        rvContacts.setAdapter(contactsAdapter);
+
+        btnGrantContactsPermission.setOnClickListener(v -> requestContactsPermission());
+
+        // Search bar logic
+        etSearchContacts.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                filterContacts(s.toString());
+                btnClearSearch.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        btnClearSearch.setOnClickListener(v -> {
+            etSearchContacts.setText("");
+            etSearchContacts.clearFocus();
+        });
+
         // Bottom navigation
         BottomNavigationView bottomNav = findViewById(R.id.bottomNav);
         bottomNav.setSelectedItemId(R.id.nav_call);
@@ -104,7 +178,8 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
             if (itemId == R.id.nav_contacts) {
-                Toast.makeText(this, R.string.toast_contacts_coming_soon, Toast.LENGTH_SHORT).show();
+                viewFlipper.setDisplayedChild(2); // Show contacts
+                loadContacts();
                 return true;
             }
             if (itemId == R.id.nav_settings) {
@@ -160,6 +235,213 @@ public class MainActivity extends AppCompatActivity {
 
         updateDisplay();
     }
+
+    // ===== Contact methods =====
+
+    private void loadContacts() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CONTACTS)
+                != PackageManager.PERMISSION_GRANTED) {
+            rvContacts.setVisibility(View.GONE);
+            contactsEmptyState.setVisibility(View.GONE);
+            contactsPermissionState.setVisibility(View.VISIBLE);
+            alphabetScroller.setVisibility(View.GONE);
+            tvContactCount.setText("");
+            return;
+        }
+
+        contactsPermissionState.setVisibility(View.GONE);
+        allContacts.clear();
+
+        String[] projection = {
+                ContactsContract.CommonDataKinds.Phone.CONTACT_ID,
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER,
+                ContactsContract.CommonDataKinds.Phone.TYPE,
+                ContactsContract.CommonDataKinds.Phone.LABEL,
+                ContactsContract.CommonDataKinds.Phone.PHOTO_URI,
+                ContactsContract.CommonDataKinds.Phone.STARRED
+        };
+
+        String sortOrder = ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME + " ASC";
+
+        try (Cursor cursor = getContentResolver().query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                projection,
+                null,
+                null,
+                sortOrder)) {
+
+            if (cursor != null) {
+                int idIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.CONTACT_ID);
+                int nameIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME);
+                int numberIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER);
+                int typeIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE);
+                int labelIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.LABEL);
+                int photoIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.PHOTO_URI);
+                int starredIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.STARRED);
+
+                while (cursor.moveToNext()) {
+                    long id = idIdx != -1 ? cursor.getLong(idIdx) : 0L;
+                    String name = nameIdx != -1 ? cursor.getString(nameIdx) : null;
+                    String number = numberIdx != -1 ? cursor.getString(numberIdx) : null;
+                    int type = typeIdx != -1 ? cursor.getInt(typeIdx) : 0;
+                    String customLabel = labelIdx != -1 ? cursor.getString(labelIdx) : null;
+                    String photoUriStr = photoIdx != -1 ? cursor.getString(photoIdx) : null;
+                    boolean starred = starredIdx != -1 && cursor.getInt(starredIdx) == 1;
+
+                    String phoneLabel = (String) ContactsContract.CommonDataKinds.Phone
+                            .getTypeLabel(getResources(), type, customLabel);
+
+                    Uri photoUri = photoUriStr != null ? Uri.parse(photoUriStr) : null;
+
+                    allContacts.add(new ContactEntry(id, name, number, phoneLabel, photoUri, starred));
+                }
+            }
+        } catch (SecurityException e) {
+            rvContacts.setVisibility(View.GONE);
+            contactsEmptyState.setVisibility(View.GONE);
+            contactsPermissionState.setVisibility(View.VISIBLE);
+            alphabetScroller.setVisibility(View.GONE);
+            return;
+        }
+
+        // Apply current search filter
+        String query = etSearchContacts.getText().toString().trim();
+        if (query.isEmpty()) {
+            filteredContacts = new ArrayList<>(allContacts);
+        } else {
+            filterContacts(query);
+            return; // filterContacts handles visibility
+        }
+
+        contactsAdapter.updateData(filteredContacts);
+        updateContactsVisibility();
+        buildAlphabetScroller();
+
+        tvContactCount.setText(String.format(getString(R.string.contacts_count_format), allContacts.size()));
+    }
+
+    private void filterContacts(String query) {
+        filteredContacts.clear();
+
+        if (TextUtils.isEmpty(query)) {
+            filteredContacts.addAll(allContacts);
+        } else {
+            String lowerQuery = query.toLowerCase();
+            for (ContactEntry contact : allContacts) {
+                String name = contact.getName();
+                String number = contact.getPhoneNumber();
+                if ((name != null && name.toLowerCase().contains(lowerQuery))
+                        || (number != null && number.replace(" ", "").contains(lowerQuery))) {
+                    filteredContacts.add(contact);
+                }
+            }
+        }
+
+        contactsAdapter.updateData(filteredContacts);
+        updateContactsVisibility();
+        buildAlphabetScroller();
+
+        // Update empty state text for search vs no contacts
+        TextView tvEmptySubtitle = findViewById(R.id.tvEmptySubtitle);
+        if (!TextUtils.isEmpty(query) && filteredContacts.isEmpty()) {
+            if (tvEmptySubtitle != null) {
+                tvEmptySubtitle.setText(R.string.no_search_results_subtitle);
+            }
+        } else {
+            if (tvEmptySubtitle != null) {
+                tvEmptySubtitle.setText(R.string.no_contacts_subtitle);
+            }
+        }
+    }
+
+    private void updateContactsVisibility() {
+        if (filteredContacts.isEmpty()) {
+            rvContacts.setVisibility(View.GONE);
+            contactsEmptyState.setVisibility(View.VISIBLE);
+            alphabetScroller.setVisibility(View.GONE);
+        } else {
+            rvContacts.setVisibility(View.VISIBLE);
+            contactsEmptyState.setVisibility(View.GONE);
+            alphabetScroller.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void buildAlphabetScroller() {
+        alphabetScroller.removeAllViews();
+        List<String> sections = contactsAdapter.getSectionLetters();
+
+        if (sections.isEmpty()) {
+            alphabetScroller.setVisibility(View.GONE);
+            return;
+        }
+
+        for (String letter : sections) {
+            TextView tv = new TextView(this);
+            tv.setText(letter);
+            tv.setTextSize(10);
+            tv.setTextColor(ContextCompat.getColor(this, R.color.bottom_nav_active));
+            tv.setGravity(Gravity.CENTER);
+            tv.setPadding(0, 1, 0, 1);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT);
+            tv.setLayoutParams(params);
+
+            tv.setOnClickListener(v -> {
+                int pos = contactsAdapter.getPositionForSection(letter);
+                if (pos >= 0) {
+                    ((LinearLayoutManager) rvContacts.getLayoutManager())
+                            .scrollToPositionWithOffset(pos, 0);
+                }
+            });
+
+            alphabetScroller.addView(tv);
+        }
+    }
+
+    private void openContactProfileFromContact(ContactEntry contact) {
+        if (contact == null) return;
+        Intent intent = new Intent(this, ContactProfileActivity.class);
+        intent.putExtra(ContactProfileActivity.EXTRA_NUMBER, contact.getPhoneNumber());
+        intent.putExtra(ContactProfileActivity.EXTRA_NAME, contact.getName());
+        startActivity(intent);
+    }
+
+    private void callContact(ContactEntry contact) {
+        if (contact == null || TextUtils.isEmpty(contact.getPhoneNumber())) return;
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
+                != PackageManager.PERMISSION_GRANTED) {
+            pendingCallNumber = contact.getPhoneNumber();
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.CALL_PHONE}, REQUEST_CALL_PHONE);
+            return;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + contact.getPhoneNumber()));
+        startActivity(intent);
+    }
+
+    private void messageContact(ContactEntry contact) {
+        if (contact == null || TextUtils.isEmpty(contact.getPhoneNumber())) return;
+
+        Intent intent = new Intent(Intent.ACTION_SENDTO);
+        intent.setData(Uri.parse("smsto:" + contact.getPhoneNumber()));
+        try {
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, R.string.no_message_app, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void requestContactsPermission() {
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_READ_CONTACTS);
+    }
+
+    // ===== Existing methods =====
 
     private void openContactProfile(CallLogEntry entry) {
         if (entry == null) {
@@ -335,16 +617,32 @@ public class MainActivity extends AppCompatActivity {
                 pendingDeleteEntry = null;
                 Toast.makeText(this, R.string.delete_call_log_permission_denied, Toast.LENGTH_SHORT).show();
             }
+        } else if (requestCode == REQUEST_READ_CONTACTS) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                loadContacts();
+            } else {
+                Toast.makeText(this, R.string.permission_contacts_denied, Toast.LENGTH_SHORT).show();
+            }
         } else if (requestCode == REQUEST_CALL_PHONE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Retry the call
-                String number = phoneNumber.toString();
-                if (!number.isEmpty()) {
+                // Retry the call — either from dialpad or contact
+                if (pendingCallNumber != null) {
                     Intent intent = new Intent(Intent.ACTION_CALL);
-                    intent.setData(Uri.parse("tel:" + number));
+                    intent.setData(Uri.parse("tel:" + pendingCallNumber));
                     if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
                             == PackageManager.PERMISSION_GRANTED) {
                         startActivity(intent);
+                    }
+                    pendingCallNumber = null;
+                } else {
+                    String number = phoneNumber.toString();
+                    if (!number.isEmpty()) {
+                        Intent intent = new Intent(Intent.ACTION_CALL);
+                        intent.setData(Uri.parse("tel:" + number));
+                        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
+                                == PackageManager.PERMISSION_GRANTED) {
+                            startActivity(intent);
+                        }
                     }
                 }
             }
