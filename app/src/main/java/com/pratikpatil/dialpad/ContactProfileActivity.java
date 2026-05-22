@@ -1,20 +1,27 @@
 package com.pratikpatil.dialpad;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.role.RoleManager;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import android.telecom.TelecomManager;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -180,9 +187,40 @@ public class ContactProfileActivity extends AppCompatActivity {
     }
 
     private void startCall(String number) {
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + number));
-        startActivity(intent);
+        TelecomManager telecom = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+        if (telecom != null && getPackageName().equals(telecom.getDefaultDialerPackage())) {
+            Uri uri = Uri.fromParts("tel", number, null);
+            telecom.placeCall(uri, new Bundle());
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Setup Required")
+                    .setMessage("Set this app as your default Phone app to use the custom call screen.")
+                    .setPositiveButton("Set as Default", (d, w) -> requestDefaultDialer())
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        }
+    }
+
+    private void requestDefaultDialer() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager rm = (RoleManager) getSystemService(Context.ROLE_SERVICE);
+            if (rm != null && !rm.isRoleHeld(RoleManager.ROLE_DIALER)) {
+                try {
+                    startActivityForResult(rm.createRequestRoleIntent(RoleManager.ROLE_DIALER), 100);
+                    return;
+                } catch (Exception ignored) {}
+            }
+        }
+        try {
+            Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER);
+            intent.putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME, getPackageName());
+            startActivityForResult(intent, 100);
+            return;
+        } catch (Exception ignored) {}
+        try {
+            startActivity(new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS));
+            Toast.makeText(this, "Select Phone → choose DialPad", Toast.LENGTH_LONG).show();
+        } catch (Exception ignored) {}
     }
 
     private void sendMessage() {

@@ -8,4 +8,15 @@
     </style>
 
     <style name="Theme.DialPad" parent="Base.Theme.DialPad" />
+
+    <!-- Call screen: fullscreen, pure dark, no status bar -->
+    <style name="Theme.DialPad.CallScreen" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#FF00BCD4</item>
+        <item name="android:windowBackground">#08091A</item>
+        <item name="android:statusBarColor">#00000000</item>
+        <item name="android:navigationBarColor">#08091A</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+    </style>
 </resources>

@@ -1,10 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Core call permissions -->
     <uses-permission android:name="android.permission.CALL_PHONE"/>
     <uses-permission android:name="android.permission.READ_CALL_LOG"/>
     <uses-permission android:name="android.permission.WRITE_CALL_LOG"/>
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS"/>
+
+    <!-- Storage for recordings -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+
+    <!-- Other -->
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -14,18 +32,67 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DialPad">
+
+        <!-- ===== Main Activity — registered as a dialer ===== -->
         <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Required so Android offers this app as a phone replacement -->
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tel" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.DIAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.CALL" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="tel" />
+            </intent-filter>
         </activity>
+
         <activity
             android:name=".ContactProfileActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/settings_title"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- Call screen: fullscreen dark theme -->
+        <activity
+            android:name=".CallScreenActivity"
+            android:exported="true"
+            android:theme="@style/Theme.DialPad.CallScreen"
+            android:screenOrientation="portrait"
+            android:showOnLockScreen="true"
+            android:parentActivityName=".MainActivity" />
+
+        <!-- ===== InCallService — replaces system call screen ===== -->
+        <service
+            android:name=".MyInCallService"
+            android:permission="android.permission.BIND_INCALL_SERVICE"
+            android:exported="true">
+            <!-- Tells Android this service provides the in-call UI -->
+            <meta-data
+                android:name="android.telecom.IN_CALL_SERVICE_UI"
+                android:value="true" />
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>
