@@ -82,4 +82,70 @@
     <string name="permission_contacts_message">Allow access to your contacts to see your saved contacts</string>
     <string name="permission_contacts_denied">Contacts permission denied</string>
     <string name="contacts_count_format">%d contacts</string>
+
+    <!-- Settings page strings -->
+    <string name="settings_title">Settings</string>
+
+    <!-- Section headers -->
+    <string name="settings_section_recording">CALL RECORDING</string>
+    <string name="settings_section_general">DISPLAY &amp; SOUND</string>
+    <string name="settings_section_calls">CALL SETTINGS</string>
+    <string name="settings_section_storage">STORAGE</string>
+    <string name="settings_section_about">ABOUT</string>
+
+    <!-- Call Recording -->
+    <string name="setting_call_recording">Call Recording</string>
+    <string name="setting_recording_off">Tap to enable call recording</string>
+    <string name="setting_recording_on">Call recording is active</string>
+    <string name="setting_recording_format">Recording Format</string>
+    <string name="recording_format_m4a">M4A (Recommended)</string>
+    <string name="recording_format_mp3">MP3</string>
+    <string name="recording_format_wav">WAV (Lossless)</string>
+    <string name="setting_recording_storage">Storage Location</string>
+    <string name="recording_storage_default">Phone Storage / Recordings</string>
+    <string name="setting_auto_record">Auto-Record All Calls</string>
+    <string name="setting_auto_record_sub">Automatically record every call</string>
+    <string name="setting_recording_beep">Recording Beep Tone</string>
+    <string name="setting_recording_beep_sub">Play beep when recording starts</string>
+    <string name="recording_legal_notice">Please note: Recording calls without informing the other party may be illegal in some regions. Check your local laws before enabling this feature.</string>
+    <string name="recording_permission_rationale">Microphone and storage permissions are needed to record calls.</string>
+
+    <!-- General / Display -->
+    <string name="setting_dark_theme">Dark Theme</string>
+    <string name="setting_dark_theme_sub">Switch between light and dark mode</string>
+    <string name="setting_keypad_sounds">Keypad Sounds</string>
+    <string name="setting_keypad_sounds_sub">Play DTMF tones when dialing</string>
+    <string name="setting_vibrate">Vibrate on Incoming Call</string>
+    <string name="setting_vibrate_sub">Vibrate when receiving a call</string>
+
+    <!-- Call Settings -->
+    <string name="setting_caller_id">Show Caller ID</string>
+    <string name="setting_caller_id_sub">Display your number to recipients</string>
+    <string name="setting_block_unknown">Block Unknown Numbers</string>
+    <string name="setting_block_unknown_sub">Silence calls from hidden numbers</string>
+    <string name="setting_flash_on_call">Flash on Incoming Call</string>
+    <string name="setting_flash_on_call_sub">Blink flashlight for incoming calls</string>
+
+    <!-- Storage -->
+    <string name="setting_storage_used">Recordings Storage</string>
+    <string name="storage_used_calculating">Calculating…</string>
+    <string name="setting_clear_recordings">Clear All Recordings</string>
+    <string name="clear_recordings_confirm_title">Clear All Recordings?</string>
+    <string name="clear_recordings_confirm_msg">This will permanently delete all saved call recordings. This action cannot be undone.</string>
+    <string name="clear_recordings_success">All recordings cleared</string>
+    <string name="clear_recordings_empty">No recordings to clear</string>
+
+    <!-- About -->
+    <string name="setting_app_version">App Version</string>
+    <string name="app_version_value">1.0.0</string>
+    <string name="setting_privacy_policy">Privacy Policy</string>
+
+    <!-- Format picker dialog -->
+    <string name="recording_format_title">Choose Recording Format</string>
+
+    <!-- Toast messages -->
+    <string name="toast_recording_enabled">Call recording enabled</string>
+    <string name="toast_recording_disabled">Call recording disabled</string>
+    <string name="toast_pref_saved">Preference saved</string>
+    <string name="toast_feature_note">This setting takes effect on the next call</string>
 </resources>

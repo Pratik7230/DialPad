@@ -2,7 +2,9 @@ package com.pratikpatil.dialpad;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.media.AudioManager;
@@ -183,7 +185,8 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
             if (itemId == R.id.nav_settings) {
-                Toast.makeText(this, R.string.toast_settings_coming_soon, Toast.LENGTH_SHORT).show();
+                Intent settingsIntent = new Intent(this, SettingsActivity.class);
+                startActivity(settingsIntent);
                 return true;
             }
             return true;
@@ -710,6 +713,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void playDialTone(String digit) {
         if (toneGenerator == null) {
+            return;
+        }
+        // Respect keypad sounds preference
+        SharedPreferences prefs = getSharedPreferences("dialpad_settings", Context.MODE_PRIVATE);
+        if (!prefs.getBoolean(SettingsActivity.PREF_KEYPAD_SOUNDS, true)) {
             return;
         }
 
