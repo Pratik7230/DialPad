@@ -1,6 +1,8 @@
 package com.pratikpatil.dialpad;
 
 import android.Manifest;
+import android.app.AlertDialog;
+import android.app.role.RoleManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -10,10 +12,14 @@ import android.database.Cursor;
 import android.media.AudioManager;
 import android.media.ToneGenerator;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.CallLog;
 import android.provider.ContactsContract;
+import android.provider.Settings;
+import android.telecom.TelecomManager;
 import android.text.Editable;
+import android.util.Log;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -45,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_READ_CALL_LOG = 2;
     private static final int REQUEST_WRITE_CALL_LOG = 3;
     private static final int REQUEST_READ_CONTACTS = 4;
+    private static final int REQUEST_DEFAULT_DIALER = 100;
+    private static final String TAG = "DialPad";
 
     private TextView phoneNumberDisplay;
     private ImageButton btnCall, btnDelete;
@@ -218,14 +226,12 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            Intent intent = new Intent(Intent.ACTION_CALL);
-            intent.setData(Uri.parse("tel:" + number));
-
             if (ActivityCompat.checkSelfPermission(
                     MainActivity.this,
                     Manifest.permission.CALL_PHONE)
                     != PackageManager.PERMISSION_GRANTED) {
 
+                pendingCallNumber = number;
                 ActivityCompat.requestPermissions(
                         MainActivity.this,
                         new String[]{Manifest.permission.CALL_PHONE},
@@ -233,10 +239,85 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
 
-            startActivity(intent);
+            launchCall(number, null);
         });
 
         updateDisplay();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Request READ_PHONE_STATE if not yet granted
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{
+                            Manifest.permission.READ_PHONE_STATE,
+                            Manifest.permission.ANSWER_PHONE_CALLS
+                    }, 10);
+        }
+
+        // Auto-prompt to become default dialer on first launch
+        if (!isDefaultDialer()) {
+            SharedPreferences prefs = getSharedPreferences("dialpad_settings", MODE_PRIVATE);
+            boolean prompted = prefs.getBoolean("default_dialer_prompted", false);
+            if (!prompted) {
+                prefs.edit().putBoolean("default_dialer_prompted", true).apply();
+                requestDefaultDialer();
+            }
+        }
+    }
+
+    private boolean isDefaultDialer() {
+        TelecomManager tm = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+        return tm != null && getPackageName().equals(tm.getDefaultDialerPackage());
+    }
+
+    /**
+     * Requests the user to set this app as the default dialer.
+     * Uses three approaches in order:
+     *   1. RoleManager (Android 10+) — most reliable on modern devices
+     *   2. TelecomManager.ACTION_CHANGE_DEFAULT_DIALER (older devices)
+     *   3. Settings page fallback (if OEM blocks both)
+     */
+    private void requestDefaultDialer() {
+        // Approach 1: RoleManager (Android 10+ / API 29+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            RoleManager roleManager = (RoleManager) getSystemService(Context.ROLE_SERVICE);
+            if (roleManager != null && !roleManager.isRoleHeld(RoleManager.ROLE_DIALER)) {
+                Intent intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_DIALER);
+                try {
+                    startActivityForResult(intent, REQUEST_DEFAULT_DIALER);
+                    Log.d(TAG, "Launched RoleManager default dialer request");
+                    return;
+                } catch (Exception e) {
+                    Log.w(TAG, "RoleManager failed: " + e.getMessage());
+                }
+            }
+        }
+
+        // Approach 2: TelecomManager (Android 7+)
+        try {
+            Intent intent = new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER);
+            intent.putExtra(TelecomManager.EXTRA_CHANGE_DEFAULT_DIALER_PACKAGE_NAME,
+                    getPackageName());
+            startActivityForResult(intent, REQUEST_DEFAULT_DIALER);
+            Log.d(TAG, "Launched TelecomManager default dialer request");
+            return;
+        } catch (Exception e) {
+            Log.w(TAG, "TelecomManager failed: " + e.getMessage());
+        }
+
+        // Approach 3: Open Default Apps settings (universal fallback)
+        try {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS);
+            startActivity(intent);
+            Toast.makeText(this, "Please select \"Phone\" → choose \"DialPad\"",
+                    Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Log.e(TAG, "Settings fallback also failed: " + e.getMessage());
+        }
     }
 
     // ===== Contact methods =====
@@ -422,9 +503,7 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        Intent intent = new Intent(Intent.ACTION_CALL);
-        intent.setData(Uri.parse("tel:" + contact.getPhoneNumber()));
-        startActivity(intent);
+        launchCall(contact.getPhoneNumber(), contact.getName());
     }
 
     private void messageContact(ContactEntry contact) {
@@ -442,6 +521,30 @@ public class MainActivity extends AppCompatActivity {
     private void requestContactsPermission() {
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.READ_CONTACTS}, REQUEST_READ_CONTACTS);
+    }
+
+    // ===== Call helpers =====
+
+    /**
+     * If default dialer: TelecomManager.placeCall() → MyInCallService → CallScreenActivity.
+     * If not: show setup dialog with "Set as Default" using requestDefaultDialer().
+     */
+    private void launchCall(String number, String name) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
+                != PackageManager.PERMISSION_GRANTED) return;
+
+        if (isDefaultDialer()) {
+            TelecomManager telecom = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+            Uri uri = Uri.fromParts("tel", number, null);
+            telecom.placeCall(uri, new Bundle());
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle("Setup Required")
+                    .setMessage("Set this app as your default Phone app to use the custom call screen.\n\nThis only needs to be done once.")
+                    .setPositiveButton("Set as Default", (d, w) -> requestDefaultDialer())
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        }
     }
 
     // ===== Existing methods =====
@@ -630,22 +733,12 @@ public class MainActivity extends AppCompatActivity {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Retry the call — either from dialpad or contact
                 if (pendingCallNumber != null) {
-                    Intent intent = new Intent(Intent.ACTION_CALL);
-                    intent.setData(Uri.parse("tel:" + pendingCallNumber));
-                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
-                            == PackageManager.PERMISSION_GRANTED) {
-                        startActivity(intent);
-                    }
+                    launchCall(pendingCallNumber, null);
                     pendingCallNumber = null;
                 } else {
                     String number = phoneNumber.toString();
                     if (!number.isEmpty()) {
-                        Intent intent = new Intent(Intent.ACTION_CALL);
-                        intent.setData(Uri.parse("tel:" + number));
-                        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE)
-                                == PackageManager.PERMISSION_GRANTED) {
-                            startActivity(intent);
-                        }
+                        launchCall(number, null);
                     }
                 }
             }
