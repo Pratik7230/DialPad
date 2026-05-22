@@ -7,7 +7,7 @@ import android.telecom.InCallService;
 /**
  * InCallService implementation.
  * Android routes all active calls here when this app is the default phone app.
- * We launch CallScreenActivity so the user sees the custom UI.
+ * Handles BOTH incoming and outgoing calls.
  */
 public class MyInCallService extends InCallService {
 
@@ -30,8 +30,11 @@ public class MyInCallService extends InCallService {
             name = call.getDetails().getCallerDisplayName();
         }
 
+        // Determine if this is an incoming call
+        boolean isIncoming = (call.getState() == Call.STATE_RINGING);
+
         // Launch our custom call screen (needs NEW_TASK because this is a Service)
-        Intent intent = CallScreenActivity.buildIntent(this, number, name);
+        Intent intent = CallScreenActivity.buildIntent(this, number, name, isIncoming);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         startActivity(intent);
     }

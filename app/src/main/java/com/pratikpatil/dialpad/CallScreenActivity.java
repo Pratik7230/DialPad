@@ -11,11 +11,17 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaRecorder;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.media.ToneGenerator;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.telecom.Call;
 import android.view.View;
 import android.view.WindowManager;
@@ -36,33 +42,41 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Custom in-call screen. This activity is launched ONLY by MyInCallService
- * when Android delivers a call to us (because we are the default dialer).
- *
+ * Custom in-call screen for both OUTGOING and INCOMING calls.
+ * Launched by MyInCallService when this app is the default dialer.
  * It never uses Intent.ACTION_CALL — the call is already active via TelecomManager.
  */
 public class CallScreenActivity extends AppCompatActivity {
 
-    public static final String EXTRA_NUMBER = "call_number";
-    public static final String EXTRA_NAME   = "call_name";
+    public static final String EXTRA_NUMBER    = "call_number";
+    public static final String EXTRA_NAME      = "call_name";
+    public static final String EXTRA_INCOMING  = "call_incoming";
 
-    // Views
+    // ---- Views: common ----
     private TextView tvCallName, tvCallNumber, tvCallStatus, tvCallTimer;
+    private View pulseRingInner, pulseRingOuter;
+
+    // ---- Views: outgoing / active call controls ----
+    private LinearLayout llActionGrid, llBottomControls;
     private TextView tvMuteLabel, tvHoldLabel, tvSpeakerLabel, tvRecordLabel, tvKeypadDisplay;
     private ImageButton btnMute, btnHold, btnSpeaker, btnRecord, btnEndCall, btnKeypad;
-    private View pulseRingInner, pulseRingOuter;
     private LinearLayout badgeRecording, keypadOverlay;
 
-    // State
+    // ---- Views: incoming call controls ----
+    private LinearLayout llIncomingControls;
+    private ImageButton btnAnswerCall, btnRejectCall, btnIncomingMessage, btnIncomingRemind;
+
+    // ---- State ----
     private boolean isMuted = false, isOnHold = false, isSpeaker = false;
     private boolean isRecording = false, isKeypadVisible = false, callEnded = false;
+    private boolean isIncoming = false;
 
     // Timer
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private int elapsedSeconds = 0;
     private boolean timerRunning = false;
 
-    // Status dots animation
+    // Status dots
     private final Handler statusHandler = new Handler(Looper.getMainLooper());
     private int dotCount = 0;
     private String baseStatus = "DIALLING";
@@ -84,16 +98,27 @@ public class CallScreenActivity extends AppCompatActivity {
     private AudioManager audioManager;
     private ToneGenerator toneGenerator;
 
+    // Ringtone + vibration (incoming)
+    private Ringtone ringtone;
+    private Vibrator vibrator;
+
     // ==================== LIFECYCLE ====================
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Show on lock screen
         getWindow().addFlags(
                 WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true);
+            setTurnScreenOn(true);
+        }
 
         setContentView(R.layout.activity_call_screen);
 
@@ -103,24 +128,25 @@ public class CallScreenActivity extends AppCompatActivity {
 
         bindViews();
 
-        // Display contact info from intent extras
+        // Read intent extras
         String number = getIntent().getStringExtra(EXTRA_NUMBER);
         String name   = getIntent().getStringExtra(EXTRA_NAME);
+        isIncoming    = getIntent().getBooleanExtra(EXTRA_INCOMING, false);
+
         tvCallName.setText(name != null && !name.isEmpty() ? name
                 : number != null ? number : "Unknown");
         tvCallNumber.setText(name != null && !name.isEmpty() && number != null ? number : "");
 
         setupClickListeners();
         startPulseAnimation();
-        startStatusAnimation();
 
-        // Get the live Call object from CallManager (set by MyInCallService)
+        // Get the live Call from CallManager
         activeCall = CallManager.getInstance().getCurrentCall();
         if (activeCall != null) {
             activeCall.registerCallback(callCallback);
             handleState(activeCall.getState());
         } else {
-            // InCallService hasn't delivered the call yet — retry briefly
+            // Retry briefly — InCallService may not have delivered yet
             timerHandler.postDelayed(() -> {
                 activeCall = CallManager.getInstance().getCurrentCall();
                 if (activeCall != null) {
@@ -128,6 +154,13 @@ public class CallScreenActivity extends AppCompatActivity {
                     handleState(activeCall.getState());
                 }
             }, 1000);
+        }
+
+        // Set initial UI based on direction
+        if (isIncoming) {
+            showIncomingUI();
+        } else {
+            showOutgoingUI();
         }
     }
 
@@ -139,7 +172,81 @@ public class CallScreenActivity extends AppCompatActivity {
         timerHandler.removeCallbacksAndMessages(null);
         statusHandler.removeCallbacksAndMessages(null);
         stopRecording();
+        stopRingtone();
         if (toneGenerator != null) { toneGenerator.release(); toneGenerator = null; }
+    }
+
+    // ==================== INCOMING / OUTGOING UI ====================
+
+    private void showIncomingUI() {
+        baseStatus = "INCOMING CALL";
+        startStatusAnimation();
+
+        // Show incoming controls, hide outgoing controls
+        llIncomingControls.setVisibility(View.VISIBLE);
+        llActionGrid.setVisibility(View.GONE);
+        llBottomControls.setVisibility(View.GONE);
+
+        // Play ringtone + vibrate
+        startRingtone();
+        startVibration();
+    }
+
+    private void showOutgoingUI() {
+        baseStatus = "DIALLING";
+        startStatusAnimation();
+
+        llIncomingControls.setVisibility(View.GONE);
+        llActionGrid.setVisibility(View.VISIBLE);
+        llBottomControls.setVisibility(View.VISIBLE);
+    }
+
+    /** Transition from incoming → active call UI after answering */
+    private void transitionToActiveUI() {
+        stopRingtone();
+        stopVibration();
+
+        llIncomingControls.setVisibility(View.GONE);
+        llActionGrid.setVisibility(View.VISIBLE);
+        llBottomControls.setVisibility(View.VISIBLE);
+
+        // Animate in
+        llActionGrid.setAlpha(0f);
+        llBottomControls.setAlpha(0f);
+        llActionGrid.animate().alpha(1f).setDuration(300).start();
+        llBottomControls.animate().alpha(1f).setDuration(300).start();
+    }
+
+    // ==================== RINGTONE & VIBRATION ====================
+
+    private void startRingtone() {
+        try {
+            Uri ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+            ringtone = RingtoneManager.getRingtone(this, ringtoneUri);
+            if (ringtone != null) ringtone.play();
+        } catch (Exception ignored) {}
+    }
+
+    private void stopRingtone() {
+        if (ringtone != null && ringtone.isPlaying()) {
+            ringtone.stop();
+        }
+        ringtone = null;
+    }
+
+    private void startVibration() {
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator == null) return;
+        long[] pattern = {0, 1000, 1000}; // vibrate 1s, pause 1s, repeat
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            vibrator.vibrate(VibrationEffect.createWaveform(pattern, 0));
+        } else {
+            vibrator.vibrate(pattern, 0);
+        }
+    }
+
+    private void stopVibration() {
+        if (vibrator != null) vibrator.cancel();
     }
 
     // ==================== CALL STATE ====================
@@ -151,7 +258,11 @@ public class CallScreenActivity extends AppCompatActivity {
                 baseStatus = "DIALLING";
                 break;
             case Call.STATE_RINGING:
-                baseStatus = "RINGING";
+                if (!isIncoming) {
+                    isIncoming = true;
+                    showIncomingUI();
+                }
+                baseStatus = "INCOMING CALL";
                 break;
             case Call.STATE_ACTIVE:
                 onConnected();
@@ -167,6 +278,14 @@ public class CallScreenActivity extends AppCompatActivity {
 
     private void onConnected() {
         stopStatusAnimation();
+        stopRingtone();
+        stopVibration();
+
+        // If we were showing incoming UI, transition to active
+        if (llIncomingControls.getVisibility() == View.VISIBLE) {
+            transitionToActiveUI();
+        }
+
         tvCallStatus.setText("ACTIVE");
         tvCallStatus.setTextColor(0xFF00E5FF);
         startCallTimer();
@@ -177,6 +296,8 @@ public class CallScreenActivity extends AppCompatActivity {
         callEnded = true;
         timerRunning = false;
         stopStatusAnimation();
+        stopRingtone();
+        stopVibration();
         tvCallStatus.setText("CALL ENDED");
         btnEndCall.setEnabled(false);
         new Handler(Looper.getMainLooper()).postDelayed(this::finish, 1200);
@@ -207,13 +328,56 @@ public class CallScreenActivity extends AppCompatActivity {
         pulseRingOuter = findViewById(R.id.pulseRingOuter);
         badgeRecording = findViewById(R.id.badgeRecording);
         keypadOverlay  = findViewById(R.id.keypadOverlay);
+
+        // Outgoing controls containers
+        llActionGrid    = findViewById(R.id.llActionGrid);
+        llBottomControls = findViewById(R.id.llBottomControls);
+
+        // Incoming controls
+        llIncomingControls = findViewById(R.id.llIncomingControls);
+        btnAnswerCall      = findViewById(R.id.btnAnswerCall);
+        btnRejectCall      = findViewById(R.id.btnRejectCall);
+        btnIncomingMessage = findViewById(R.id.btnIncomingMessage);
+        btnIncomingRemind  = findViewById(R.id.btnIncomingRemind);
     }
 
     // ==================== CLICK LISTENERS ====================
 
     private void setupClickListeners() {
 
-        // Mute
+        // ---- Incoming call buttons ----
+
+        btnAnswerCall.setOnClickListener(v -> {
+            if (activeCall != null) {
+                activeCall.answer(android.telecom.VideoProfile.STATE_AUDIO_ONLY);
+            }
+        });
+
+        btnRejectCall.setOnClickListener(v -> {
+            if (activeCall != null) {
+                activeCall.reject(false, null);
+            } else {
+                onDisconnected();
+            }
+        });
+
+        btnIncomingMessage.setOnClickListener(v -> {
+            // Reject with SMS reply
+            if (activeCall != null) {
+                activeCall.reject(true, "I'll call you back");
+            }
+            brief("Rejected with message");
+        });
+
+        btnIncomingRemind.setOnClickListener(v -> {
+            brief("Reminder set for 15 minutes");
+            if (activeCall != null) {
+                activeCall.reject(false, null);
+            }
+        });
+
+        // ---- Active call buttons ----
+
         btnMute.setOnClickListener(v -> {
             isMuted = !isMuted;
             btnMute.setImageResource(isMuted ? R.drawable.ic_mic_off : R.drawable.ic_mic);
@@ -223,7 +387,6 @@ public class CallScreenActivity extends AppCompatActivity {
             if (audioManager != null) audioManager.setMicrophoneMute(isMuted);
         });
 
-        // Hold
         btnHold.setOnClickListener(v -> {
             if (activeCall == null) return;
             isOnHold = !isOnHold;
@@ -233,7 +396,6 @@ public class CallScreenActivity extends AppCompatActivity {
             if (isOnHold) activeCall.hold(); else activeCall.unhold();
         });
 
-        // Speaker
         btnSpeaker.setOnClickListener(v -> {
             isSpeaker = !isSpeaker;
             btnSpeaker.setBackgroundResource(isSpeaker
@@ -246,23 +408,19 @@ public class CallScreenActivity extends AppCompatActivity {
             }
         });
 
-        // Record
         btnRecord.setOnClickListener(v -> toggleRecording());
 
-        // Video / Add call
         findViewById(R.id.btnVideoCall).setOnClickListener(v ->
                 brief("Video calling not supported"));
         findViewById(R.id.btnAddCall).setOnClickListener(v ->
                 brief("Hold the current call first"));
 
-        // In-call keypad
         btnKeypad.setOnClickListener(v -> {
             isKeypadVisible = !isKeypadVisible;
             keypadOverlay.setVisibility(isKeypadVisible ? View.VISIBLE : View.GONE);
             if (isKeypadVisible) { tvKeypadDisplay.setText(""); slideIn(keypadOverlay); }
         });
 
-        // End call
         btnEndCall.setOnClickListener(v -> {
             if (activeCall != null) {
                 activeCall.disconnect();
@@ -279,7 +437,6 @@ public class CallScreenActivity extends AppCompatActivity {
         if (digit == null) return;
         tvKeypadDisplay.setText(tvKeypadDisplay.getText().toString() + digit);
         if (toneGenerator != null) toneGenerator.startTone(dtmfFor(digit), 100);
-        // Send DTMF through the real call
         if (activeCall != null) activeCall.playDtmfTone(digit.charAt(0));
     }
 
@@ -449,9 +606,14 @@ public class CallScreenActivity extends AppCompatActivity {
     }
 
     public static Intent buildIntent(Context ctx, String number, String name) {
+        return buildIntent(ctx, number, name, false);
+    }
+
+    public static Intent buildIntent(Context ctx, String number, String name, boolean incoming) {
         Intent i = new Intent(ctx, CallScreenActivity.class);
         i.putExtra(EXTRA_NUMBER, number);
         i.putExtra(EXTRA_NAME, name);
+        i.putExtra(EXTRA_INCOMING, incoming);
         return i;
     }
 }
