@@ -24,6 +24,8 @@
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
 
     <application
         android:allowBackup="true"
@@ -83,6 +85,18 @@
             android:theme="@style/Theme.DialPad.CallScreen"
             android:screenOrientation="portrait"
             android:showOnLockScreen="true" />
+
+        <!-- Saved call recordings list + player -->
+        <activity
+            android:name=".RecordingsActivity"
+            android:exported="false"
+            android:parentActivityName=".SettingsActivity" />
+
+        <!-- Keeps call recording alive outside the call screen (Android 11+ mic rules) -->
+        <service
+            android:name=".RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
 
         <!-- Notification buttons: Decline / Hang up / dismiss missed calls -->
         <receiver

@@ -81,6 +81,8 @@ public class MyInCallService extends InCallService {
         }
 
         CallManager.getInstance().removeCall(call);
+        // Last call gone → finish and save the recording even if the call screen is closed
+        if (!CallManager.getInstance().hasCalls()) RecordingService.stop(this);
         refresh();
     }
 

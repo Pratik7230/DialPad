@@ -10,11 +10,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
-import android.media.MediaRecorder;
 import android.media.ToneGenerator;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -36,11 +34,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -78,7 +72,7 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
     private final CallManager callManager = CallManager.getInstance();
     @Nullable private Call shownCall;           // primary call currently displayed
     private long localConnectTime = 0;          // fallback if Telecom has no connect time
-    private boolean isRecording = false, isKeypadVisible = false;
+    private boolean isKeypadVisible = false;
     private boolean showingIncoming = false;
     private boolean ending = false;
 
@@ -102,9 +96,6 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
     };
 
     private final Runnable finishRunnable = this::finish;
-
-    // Recording
-    private MediaRecorder mediaRecorder;
 
     // Audio
     private ToneGenerator toneGenerator;
@@ -178,7 +169,8 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
         callManager.removeListener(this);
         handler.removeCallbacksAndMessages(null);
         releaseProximity();
-        stopRecording();
+        if (dotBlink != null) dotBlink.cancel();
+        // Recording is NOT stopped here — RecordingService keeps it going until the call ends
         if (toneGenerator != null) { toneGenerator.release(); toneGenerator = null; }
     }
 
@@ -267,6 +259,7 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
 
         renderHold(primary);
         renderSecondary(primary);
+        renderRecording();
 
         boolean canAdd = (state == Call.STATE_ACTIVE || state == Call.STATE_HOLDING)
                 && callManager.getSecondaryCall(primary) == null;
@@ -357,7 +350,7 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
         tvCallStatus.setText("CALL ENDED");
         btnEndCall.setEnabled(false);
         llSecondaryCall.setVisibility(View.GONE);
-        stopRecordingWithUi(false);
+        RecordingService.stop(this);
         releaseProximity();
         handler.postDelayed(finishRunnable, 1200);
     }
@@ -616,80 +609,74 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
     }
 
     // ==================== RECORDING ====================
+    // The recorder itself lives in RecordingService so it keeps running when
+    // this screen is closed; this screen only starts/stops it and shows state.
+
+    private static final int REQ_RECORD = 99;
 
     private void toggleRecording() {
+        if (RecordingService.isRecording()) {
+            RecordingService.stop(this);
+            return;
+        }
         SharedPreferences prefs = getSharedPreferences("dialpad_settings", Context.MODE_PRIVATE);
         if (!prefs.getBoolean(SettingsActivity.PREF_CALL_RECORDING, false)) {
             brief("Enable call recording in Settings first");
             return;
         }
-        if (!isRecording) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-                    != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.RECORD_AUDIO}, 99);
-                return;
-            }
-            startRecording();
-        } else {
-            stopRecordingWithUi(true);
+        String[] missing = missingRecordingPermissions();
+        if (missing.length > 0) {
+            ActivityCompat.requestPermissions(this, missing, REQ_RECORD);
+            return;
         }
+        startRecording();
+    }
+
+    private String[] missingRecordingPermissions() {
+        List<String> needed = new ArrayList<>();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+                != PackageManager.PERMISSION_GRANTED) {
+            needed.add(Manifest.permission.RECORD_AUDIO);
+        }
+        // Android 9 and older write to the public Music folder with the File API
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            needed.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        return needed.toArray(new String[0]);
     }
 
     private void startRecording() {
+        Call primary = callManager.getPrimaryCall();
+        if (primary == null) return;
         try {
-            File dir = new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_MUSIC), "Recordings");
-            if (!dir.exists()) dir.mkdirs();
-            String ts = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-            String path = new File(dir, "call_" + ts + ".m4a").getAbsolutePath();
-
-            mediaRecorder = new MediaRecorder();
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            mediaRecorder.setOutputFile(path);
-            mediaRecorder.prepare();
-            mediaRecorder.start();
-
-            isRecording = true;
-            btnRecord.setBackgroundResource(R.drawable.bg_call_action_btn_active);
-            tvRecordLabel.setText("Recording");
-            badgeRecording.setVisibility(View.VISIBLE);
-            blinkDot();
-            brief("Recording started");
-        } catch (IOException | RuntimeException e) {
+            RecordingService.start(this, callManager.getDisplayName(this, primary));
+        } catch (Exception e) {
             brief("Could not start recording");
-            if (mediaRecorder != null) { mediaRecorder.release(); mediaRecorder = null; }
         }
     }
 
-    private void stopRecordingWithUi(boolean announce) {
-        if (!isRecording) return;
-        stopRecording();
-        isRecording = false;
-        btnRecord.setBackgroundResource(R.drawable.bg_call_action_btn);
-        tvRecordLabel.setText("Record");
-        badgeRecording.setVisibility(View.GONE);
-        if (announce) brief("Recording saved");
-    }
+    private ObjectAnimator dotBlink;
 
-    private void stopRecording() {
-        if (mediaRecorder != null) {
-            try { mediaRecorder.stop(); } catch (Exception ignored) {}
-            mediaRecorder.release();
-            mediaRecorder = null;
-        }
-    }
+    private void renderRecording() {
+        boolean rec = RecordingService.isRecording();
+        btnRecord.setBackgroundResource(rec
+                ? R.drawable.bg_call_action_btn_active : R.drawable.bg_call_action_btn);
+        tvRecordLabel.setText(rec ? "Stop rec" : "Record");
+        badgeRecording.setVisibility(rec ? View.VISIBLE : View.GONE);
 
-    private void blinkDot() {
         View dot = findViewById(R.id.recordingDot);
-        if (dot == null) return;
-        ObjectAnimator a = ObjectAnimator.ofFloat(dot, "alpha", 1f, 0f);
-        a.setDuration(700);
-        a.setRepeatMode(ObjectAnimator.REVERSE);
-        a.setRepeatCount(ObjectAnimator.INFINITE);
-        a.start();
+        if (rec && dotBlink == null && dot != null) {
+            dotBlink = ObjectAnimator.ofFloat(dot, "alpha", 1f, 0f);
+            dotBlink.setDuration(700);
+            dotBlink.setRepeatMode(ObjectAnimator.REVERSE);
+            dotBlink.setRepeatCount(ObjectAnimator.INFINITE);
+            dotBlink.start();
+        } else if (!rec && dotBlink != null) {
+            dotBlink.cancel();
+            dotBlink = null;
+        }
     }
 
     // ==================== TIMER ====================
@@ -754,9 +741,11 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == 99 && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode != REQ_RECORD) return;
+        if (missingRecordingPermissions().length == 0) {
             startRecording();
+        } else {
+            brief("Recording needs microphone permission");
         }
     }
 }
