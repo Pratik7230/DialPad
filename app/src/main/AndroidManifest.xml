@@ -22,6 +22,8 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application
         android:allowBackup="true"
@@ -71,13 +73,21 @@
             android:parentActivityName=".MainActivity" />
 
         <!-- Call screen: fullscreen dark theme -->
+        <!-- singleTask in its own task: one call screen, reopened from the notification -->
         <activity
             android:name=".CallScreenActivity"
-            android:exported="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity="com.pratikpatil.dialpad.call"
+            android:excludeFromRecents="true"
             android:theme="@style/Theme.DialPad.CallScreen"
             android:screenOrientation="portrait"
-            android:showOnLockScreen="true"
-            android:parentActivityName=".MainActivity" />
+            android:showOnLockScreen="true" />
+
+        <!-- Notification buttons: Decline / Hang up / dismiss missed calls -->
+        <receiver
+            android:name=".CallActionReceiver"
+            android:exported="false" />
 
         <!-- ===== InCallService — replaces system call screen ===== -->
         <service

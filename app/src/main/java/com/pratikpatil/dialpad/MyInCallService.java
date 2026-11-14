@@ -2,46 +2,98 @@ package com.pratikpatil.dialpad;
 
 import android.content.Intent;
 import android.telecom.Call;
+import android.telecom.CallAudioState;
+import android.telecom.DisconnectCause;
 import android.telecom.InCallService;
 
 /**
  * InCallService implementation.
- * Android routes all active calls here when this app is the default phone app.
- * Handles BOTH incoming and outgoing calls.
+ * Android routes all calls here when this app is the default phone app.
+ *
+ * Responsibilities:
+ *  - keep CallManager's list of live calls up to date (multiple calls / call waiting)
+ *  - drive the ringer and the incoming / ongoing / missed-call notifications
+ *  - forward audio-route changes (mute, speaker, Bluetooth) to the UI
+ *  - open the call screen
  */
 public class MyInCallService extends InCallService {
+
+    private CallRinger ringer;
+
+    private final Call.Callback callCallback = new Call.Callback() {
+        @Override
+        public void onStateChanged(Call call, int state) {
+            refresh();
+        }
+
+        @Override
+        public void onDetailsChanged(Call call, Call.Details details) {
+            // Capabilities (hold/merge) and connect time live in details
+            CallManager.getInstance().notifyCallsChanged();
+        }
+
+        @Override
+        public void onConferenceableCallsChanged(Call call, java.util.List<Call> conferenceableCalls) {
+            CallManager.getInstance().notifyCallsChanged();
+        }
+    };
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        ringer = new CallRinger(this);
+        CallNotifier.createChannels(this);
+        CallManager.getInstance().setService(this, ringer);
+    }
+
+    @Override
+    public void onDestroy() {
+        ringer.release();
+        CallManager.getInstance().setService(null, null);
+        super.onDestroy();
+    }
 
     @Override
     public void onCallAdded(Call call) {
         super.onCallAdded(call);
+        call.registerCallback(callCallback);
+        CallManager.getInstance().addCall(call);
+        refresh();
 
-        // Store for use in CallScreenActivity
-        CallManager.getInstance().setCurrentCall(call);
-
-        // Extract number and name from call details
-        String number = "";
-        String name   = "";
-        if (call.getDetails() != null && call.getDetails().getHandle() != null) {
-            number = call.getDetails().getHandle().getSchemeSpecificPart();
-        }
-        if (call.getDetails() != null
-                && call.getDetails().getCallerDisplayName() != null
-                && !call.getDetails().getCallerDisplayName().isEmpty()) {
-            name = call.getDetails().getCallerDisplayName();
-        }
-
-        // Determine if this is an incoming call
-        boolean isIncoming = (call.getState() == Call.STATE_RINGING);
-
-        // Launch our custom call screen (needs NEW_TASK because this is a Service)
-        Intent intent = CallScreenActivity.buildIntent(this, number, name, isIncoming);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
+        // InCallService is bound by the system, so it is allowed to start the
+        // call screen from the background. The full-screen notification covers
+        // the lock screen / OEMs that still block it.
+        Intent intent = new Intent(this, CallScreenActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        try {
+            startActivity(intent);
+        } catch (Exception ignored) {}
     }
 
     @Override
     public void onCallRemoved(Call call) {
         super.onCallRemoved(call);
-        CallManager.getInstance().setCurrentCall(null);
+        call.unregisterCallback(callCallback);
+
+        DisconnectCause cause = call.getDetails() != null ? call.getDetails().getDisconnectCause() : null;
+        if (cause != null && cause.getCode() == DisconnectCause.MISSED) {
+            CallNotifier.showMissedCall(this, CallManager.getInstance().getDisplayName(this, call));
+        }
+
+        CallManager.getInstance().removeCall(call);
+        refresh();
+    }
+
+    @Override
+    public void onCallAudioStateChanged(CallAudioState audioState) {
+        super.onCallAudioStateChanged(audioState);
+        CallManager.getInstance().setAudioState(audioState);
+    }
+
+    /** Re-sync ringer, notification and UI with the current set of calls. */
+    private void refresh() {
+        ringer.update();
+        CallNotifier.updateCallNotification(this);
+        CallManager.getInstance().notifyCallsChanged();
     }
 }
