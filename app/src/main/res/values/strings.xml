@@ -44,6 +44,7 @@
     <string name="call_type_missed">Missed</string>
     <string name="call_type_rejected">Rejected</string>
     <string name="call_type_unknown">Unknown</string>
+    <string name="call_type_voicemail">Voicemail</string>
     <string name="no_call_history">No recent calls</string>
     <string name="no_call_history_subtitle">Your call history will appear here</string>
     <string name="permission_call_log_title">Call log permission needed</string>

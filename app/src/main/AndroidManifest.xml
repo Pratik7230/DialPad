@@ -98,6 +98,16 @@
             android:exported="false"
             android:foregroundServiceType="microphone" />
 
+        <!-- System tells the default dialer to show the voicemail notification.
+             The action is a protected (system-only) broadcast. -->
+        <receiver
+            android:name=".VoicemailNotificationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.action.SHOW_VOICEMAIL_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
+
         <!-- Notification buttons: Decline / Hang up / dismiss missed calls -->
         <receiver
             android:name=".CallActionReceiver"

@@ -36,6 +36,17 @@ public class MyInCallService extends InCallService {
         public void onConferenceableCallsChanged(Call call, java.util.List<Call> conferenceableCalls) {
             CallManager.getInstance().notifyCallsChanged();
         }
+
+        @Override
+        public void onChildrenChanged(Call call, java.util.List<Call> children) {
+            // Participants joined / left / went private
+            refresh();
+        }
+
+        @Override
+        public void onParentChanged(Call call, Call parent) {
+            refresh();
+        }
     };
 
     @Override

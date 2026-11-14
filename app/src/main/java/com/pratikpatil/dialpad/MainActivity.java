@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_READ_CALL_LOG = 2;
     private static final int REQUEST_WRITE_CALL_LOG = 3;
     private static final int REQUEST_READ_CONTACTS = 4;
+    private static final int REQUEST_CALL_VOICEMAIL = 5;
     private static final int REQUEST_DEFAULT_DIALER = 100;
     private static final String TAG = "DialPad";
 
@@ -212,6 +213,16 @@ public class MainActivity extends AppCompatActivity {
 
         if (keyZero != null) {
             keyZero.setOnLongClickListener(this::zeroLongClick);
+        }
+
+        // Long-press 1 on an empty dialpad calls voicemail (standard dialer gesture)
+        View keyOne = findViewById(R.id.keyOne);
+        if (keyOne != null) {
+            keyOne.setOnLongClickListener(v -> {
+                if (phoneNumber.length() > 0) return false; // normal "1" while typing
+                VoicemailHelper.callVoicemail(this, REQUEST_CALL_VOICEMAIL);
+                return true;
+            });
         }
 
         // Long press to clear all
@@ -757,6 +768,10 @@ public class MainActivity extends AppCompatActivity {
                 loadContacts();
             } else {
                 Toast.makeText(this, R.string.permission_contacts_denied, Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_CALL_VOICEMAIL) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                VoicemailHelper.callVoicemail(this, REQUEST_CALL_VOICEMAIL);
             }
         } else if (requestCode == REQUEST_CALL_PHONE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

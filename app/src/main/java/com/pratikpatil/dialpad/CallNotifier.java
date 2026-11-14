@@ -28,6 +28,7 @@ public final class CallNotifier {
     static final String CHANNEL_ONGOING  = "ongoing_calls";
     static final String CHANNEL_MISSED   = "missed_calls";
     static final String CHANNEL_RECORDING = "call_recording";
+    static final String CHANNEL_VOICEMAIL = "voicemail";
 
     static final int ID_CALL   = 1001;
     static final int ID_MISSED = 1002;
@@ -65,7 +66,11 @@ public final class CallNotifier {
                 "Call recording", NotificationManager.IMPORTANCE_LOW);
         recording.setSound(null, null);
 
+        NotificationChannel voicemail = new NotificationChannel(CHANNEL_VOICEMAIL,
+                "Voicemail", NotificationManager.IMPORTANCE_DEFAULT);
+
         nm.createNotificationChannel(recording);
+        nm.createNotificationChannel(voicemail);
         nm.createNotificationChannel(incoming);
         nm.createNotificationChannel(ongoing);
         nm.createNotificationChannel(missed);

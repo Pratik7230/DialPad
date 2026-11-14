@@ -181,12 +181,19 @@ public class CallManager {
         return handle != null ? handle.getSchemeSpecificPart() : "";
     }
 
+    /** True for a call placed to the "voicemail:" URI. */
+    public static boolean isVoicemail(@Nullable Call call) {
+        if (call == null || call.getDetails() == null || call.getDetails().getHandle() == null) return false;
+        return android.telecom.PhoneAccount.SCHEME_VOICEMAIL.equals(call.getDetails().getHandle().getScheme());
+    }
+
     /** Best display name: contact name → network caller name → number → "Unknown". */
     public String getDisplayName(Context ctx, @Nullable Call call) {
         if (call == null) return "Unknown";
         if (call.getDetails() != null && call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE)) {
             return "Conference call";
         }
+        if (isVoicemail(call)) return "Voicemail";
         String number = getNumber(call);
         String contact = lookupContactName(ctx, number);
         if (!TextUtils.isEmpty(contact)) return contact;

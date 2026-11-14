@@ -203,6 +203,13 @@ public class SettingsActivity extends AppCompatActivity {
                 prefs.edit().putBoolean(PREF_VIBRATE, isChecked).apply());
 
         // ===== CALL SETTINGS =====
+        findViewById(R.id.rowVoicemail).setOnClickListener(v ->
+                VoicemailHelper.showVoicemailMenu(this, REQUEST_CALL_VOICEMAIL));
+        String vmNumber = VoicemailHelper.getVoicemailNumber(this);
+        if (vmNumber != null) {
+            ((TextView) findViewById(R.id.tvVoicemailSub)).setText("Voicemail number: " + vmNumber);
+        }
+
         SwitchMaterial switchCallerId = findViewById(R.id.switchCallerId);
         LinearLayout rowCallerId = findViewById(R.id.rowCallerId);
         rowCallerId.setOnClickListener(v ->
@@ -305,6 +312,16 @@ public class SettingsActivity extends AppCompatActivity {
     // ======= Storage =======
 
     private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private static final int REQUEST_CALL_VOICEMAIL = 21;
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CALL_VOICEMAIL && grantResults.length > 0
+                && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            VoicemailHelper.callVoicemail(this, REQUEST_CALL_VOICEMAIL);
+        }
+    }
 
     @Override
     protected void onResume() {

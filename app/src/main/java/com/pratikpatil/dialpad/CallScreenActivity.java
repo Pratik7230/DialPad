@@ -63,6 +63,7 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
     // ---- Views: second call banner ----
     private LinearLayout llSecondaryCall;
     private TextView tvSecondaryCall, btnSwap, btnMerge;
+    private TextView tvManageConference;
 
     // ---- Views: incoming call controls ----
     private LinearLayout llIncomingControls;
@@ -234,6 +235,16 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
         tvCallNumber.setText(!name.equals(number) ? number : "");
 
         int state = primary.getState();
+
+        // Conference: show participant count + "Manage conference"
+        boolean conference = isConference(primary);
+        if (conference) {
+            int n = liveChildren(primary).size();
+            tvCallNumber.setText(n > 0 ? n + " participants" : "");
+        }
+        tvManageConference.setVisibility(conference && state != Call.STATE_RINGING
+                ? View.VISIBLE : View.GONE);
+        refreshConferenceDialog(primary);
         boolean ringing = state == Call.STATE_RINGING;
         setIncomingMode(ringing);
 
@@ -343,9 +354,105 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
                 && call.getDetails().hasProperty(Call.Details.PROPERTY_CONFERENCE);
     }
 
+    // ==================== CONFERENCE MANAGEMENT ====================
+
+    @Nullable private AlertDialog conferenceDialog;
+    @Nullable private LinearLayout conferenceList;
+
+    private static List<Call> liveChildren(Call conference) {
+        List<Call> out = new ArrayList<>();
+        for (Call c : conference.getChildren()) {
+            if (c.getState() != Call.STATE_DISCONNECTED && c.getState() != Call.STATE_DISCONNECTING) {
+                out.add(c);
+            }
+        }
+        return out;
+    }
+
+    private void showConferenceManager() {
+        Call primary = callManager.getPrimaryCall();
+        if (primary == null || !isConference(primary)) return;
+
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        conferenceList = new LinearLayout(this);
+        conferenceList.setOrientation(LinearLayout.VERTICAL);
+        conferenceList.setPadding(0, dp(8), 0, 0);
+        scroll.addView(conferenceList);
+
+        conferenceDialog = new AlertDialog.Builder(this)
+                .setTitle("Conference call")
+                .setView(scroll)
+                .setPositiveButton("Done", null)
+                .create();
+        conferenceDialog.setOnDismissListener(d -> {
+            conferenceDialog = null;
+            conferenceList = null;
+        });
+        fillConferenceList(primary);
+        conferenceDialog.show();
+    }
+
+    /** Keep an open participant list in sync as people join, leave or go private. */
+    private void refreshConferenceDialog(@Nullable Call primary) {
+        if (conferenceDialog == null) return;
+        if (primary == null || !isConference(primary)) {
+            conferenceDialog.dismiss();
+        } else {
+            fillConferenceList(primary);
+        }
+    }
+
+    private void fillConferenceList(Call conference) {
+        if (conferenceList == null) return;
+        conferenceList.removeAllViews();
+
+        List<Call> children = liveChildren(conference);
+        if (children.isEmpty()) {
+            // IMS/VoLTE conferences hosted by the carrier often don't expose participants
+            TextView empty = new TextView(this);
+            empty.setText("Your carrier doesn't share the participant list for this call.");
+            empty.setPadding(dp(24), dp(8), dp(24), dp(16));
+            conferenceList.addView(empty);
+            return;
+        }
+
+        android.view.LayoutInflater inflater = getLayoutInflater();
+        for (Call child : children) {
+            View row = inflater.inflate(R.layout.item_conference_participant, conferenceList, false);
+            String name = callManager.getDisplayName(this, child);
+            String number = CallManager.getNumber(child);
+            ((TextView) row.findViewById(R.id.tvParticipantName)).setText(name);
+            ((TextView) row.findViewById(R.id.tvParticipantNumber))
+                    .setText(!name.equals(number) ? number : "");
+
+            android.widget.Button btnPrivate = row.findViewById(R.id.btnParticipantPrivate);
+            android.widget.Button btnEnd = row.findViewById(R.id.btnParticipantEnd);
+            boolean canSplit = child.getDetails() != null
+                    && child.getDetails().can(Call.Details.CAPABILITY_SEPARATE_FROM_CONFERENCE);
+            boolean canEnd = child.getDetails() != null
+                    && child.getDetails().can(Call.Details.CAPABILITY_DISCONNECT_FROM_CONFERENCE);
+
+            btnPrivate.setEnabled(canSplit);
+            btnPrivate.setAlpha(canSplit ? 1f : 0.35f);
+            // "Private": talk to this person alone; the rest of the conference goes on hold
+            btnPrivate.setOnClickListener(v -> child.splitFromConference());
+
+            btnEnd.setEnabled(canEnd);
+            btnEnd.setAlpha(canEnd ? 1f : 0.35f);
+            btnEnd.setOnClickListener(v -> child.disconnect());
+
+            conferenceList.addView(row);
+        }
+    }
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+
     private void onAllCallsEnded() {
         if (ending) return;
         ending = true;
+        if (conferenceDialog != null) conferenceDialog.dismiss();
         animateDots = false;
         tvCallStatus.setText("CALL ENDED");
         btnEndCall.setEnabled(false);
@@ -484,6 +591,9 @@ public class CallScreenActivity extends AppCompatActivity implements CallManager
         tvSecondaryCall = findViewById(R.id.tvSecondaryCall);
         btnSwap         = findViewById(R.id.btnSwap);
         btnMerge        = findViewById(R.id.btnMerge);
+
+        tvManageConference = findViewById(R.id.tvManageConference);
+        tvManageConference.setOnClickListener(v -> showConferenceManager());
 
         llIncomingControls = findViewById(R.id.llIncomingControls);
         btnAnswerCall      = findViewById(R.id.btnAnswerCall);

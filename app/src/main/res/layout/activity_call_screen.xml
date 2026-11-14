@@ -136,6 +136,23 @@
         android:fontFamily="sans-serif"
         android:gravity="center" />
 
+    <!-- Conference: open the participant list (private / end per person) -->
+    <TextView
+        android:id="@+id/tvManageConference"
+        android:layout_width="wrap_content"
+        android:layout_height="34dp"
+        android:layout_below="@id/tvCarrierTag"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_held_call_pill"
+        android:gravity="center"
+        android:paddingHorizontal="16dp"
+        android:text="Manage conference"
+        android:textColor="#FF00E5FF"
+        android:textSize="13sp"
+        android:fontFamily="sans-serif-medium"
+        android:visibility="gone" />
+
     <!-- ===== SECOND CALL BANNER (call waiting / held call: swap & merge) ===== -->
     <LinearLayout
         android:id="@+id/llSecondaryCall"
