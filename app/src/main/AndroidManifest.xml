@@ -22,6 +22,10 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT"/>
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"/>
 
     <application
         android:allowBackup="true"
@@ -71,13 +75,43 @@
             android:parentActivityName=".MainActivity" />
 
         <!-- Call screen: fullscreen dark theme -->
+        <!-- singleTask in its own task: one call screen, reopened from the notification -->
         <activity
             android:name=".CallScreenActivity"
-            android:exported="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity="com.pratikpatil.dialpad.call"
+            android:excludeFromRecents="true"
             android:theme="@style/Theme.DialPad.CallScreen"
             android:screenOrientation="portrait"
-            android:showOnLockScreen="true"
-            android:parentActivityName=".MainActivity" />
+            android:showOnLockScreen="true" />
+
+        <!-- Saved call recordings list + player -->
+        <activity
+            android:name=".RecordingsActivity"
+            android:exported="false"
+            android:parentActivityName=".SettingsActivity" />
+
+        <!-- Keeps call recording alive outside the call screen (Android 11+ mic rules) -->
+        <service
+            android:name=".RecordingService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
+        <!-- System tells the default dialer to show the voicemail notification.
+             The action is a protected (system-only) broadcast. -->
+        <receiver
+            android:name=".VoicemailNotificationReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.telephony.action.SHOW_VOICEMAIL_NOTIFICATION" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Notification buttons: Decline / Hang up / dismiss missed calls -->
+        <receiver
+            android:name=".CallActionReceiver"
+            android:exported="false" />
 
         <!-- ===== InCallService — replaces system call screen ===== -->
         <service

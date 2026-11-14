@@ -3,9 +3,9 @@ package com.pratikpatil.dialpad;
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
@@ -19,7 +19,9 @@ import androidx.appcompat.app.AppCompatDelegate;
 
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
-import java.io.File;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -74,7 +76,6 @@ public class SettingsActivity extends AppCompatActivity {
         setupViews();
         loadPreferences();
         setupListeners();
-        calculateStorageUsed();
     }
 
     private void setupViews() {
@@ -157,7 +158,7 @@ public class SettingsActivity extends AppCompatActivity {
         // Recording storage row
         LinearLayout rowRecordingStorageView = findViewById(R.id.rowRecordingStorage);
         rowRecordingStorageView.setOnClickListener(v ->
-                Toast.makeText(this, R.string.toast_feature_note, Toast.LENGTH_SHORT).show());
+                startActivity(new Intent(this, RecordingsActivity.class)));
 
         // Auto-record toggle
         LinearLayout rowAutoRecordView = findViewById(R.id.rowAutoRecord);
@@ -202,6 +203,13 @@ public class SettingsActivity extends AppCompatActivity {
                 prefs.edit().putBoolean(PREF_VIBRATE, isChecked).apply());
 
         // ===== CALL SETTINGS =====
+        findViewById(R.id.rowVoicemail).setOnClickListener(v ->
+                VoicemailHelper.showVoicemailMenu(this, REQUEST_CALL_VOICEMAIL));
+        String vmNumber = VoicemailHelper.getVoicemailNumber(this);
+        if (vmNumber != null) {
+            ((TextView) findViewById(R.id.tvVoicemailSub)).setText("Voicemail number: " + vmNumber);
+        }
+
         SwitchMaterial switchCallerId = findViewById(R.id.switchCallerId);
         LinearLayout rowCallerId = findViewById(R.id.rowCallerId);
         rowCallerId.setOnClickListener(v ->
@@ -303,21 +311,49 @@ public class SettingsActivity extends AppCompatActivity {
 
     // ======= Storage =======
 
-    private void calculateStorageUsed() {
-        File recordingsDir = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
-                "Recordings");
+    private final ExecutorService io = Executors.newSingleThreadExecutor();
+    private static final int REQUEST_CALL_VOICEMAIL = 21;
 
-        long totalBytes = 0;
-        if (recordingsDir.exists() && recordingsDir.isDirectory()) {
-            File[] files = recordingsDir.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    totalBytes += f.length();
-                }
-            }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_CALL_VOICEMAIL && grantResults.length > 0
+                && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            VoicemailHelper.callVoicemail(this, REQUEST_CALL_VOICEMAIL);
         }
+    }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        calculateStorageUsed(); // recordings may have been added/deleted meanwhile
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        io.shutdownNow();
+    }
+
+    private void calculateStorageUsed() {
+        io.execute(() -> {
+            List<RecordingStore.Recording> list = RecordingStore.list(this);
+            long total = 0;
+            for (RecordingStore.Recording r : list) total += r.sizeBytes;
+            final long totalBytes = total;
+            final int count = list.size();
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                showStorageUsed(totalBytes);
+                TextView path = findViewById(R.id.tvRecordingStoragePath);
+                path.setText(count == 0 ? RecordingStore.LOCATION_LABEL
+                        : count + (count == 1 ? " recording · " : " recordings · ")
+                          + RecordingStore.LOCATION_LABEL);
+            });
+        });
+    }
+
+    private void showStorageUsed(long totalBytes) {
         long totalMB = totalBytes / (1024 * 1024);
         String usedText;
         if (totalMB < 1) {
@@ -354,29 +390,16 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void clearAllRecordings() {
-        File recordingsDir = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MUSIC),
-                "Recordings");
-
-        boolean anyDeleted = false;
-        if (recordingsDir.exists() && recordingsDir.isDirectory()) {
-            File[] files = recordingsDir.listFiles();
-            if (files != null && files.length > 0) {
-                for (File f : files) {
-                    if (f.isFile()) {
-                        f.delete();
-                        anyDeleted = true;
-                    }
-                }
-            }
-        }
-
-        if (anyDeleted) {
-            Toast.makeText(this, R.string.clear_recordings_success, Toast.LENGTH_SHORT).show();
-            calculateStorageUsed();
-        } else {
-            Toast.makeText(this, R.string.clear_recordings_empty, Toast.LENGTH_SHORT).show();
-        }
+        io.execute(() -> {
+            int deleted = RecordingStore.deleteAll(this);
+            runOnUiThread(() -> {
+                if (isFinishing() || isDestroyed()) return;
+                Toast.makeText(this, deleted > 0
+                        ? R.string.clear_recordings_success
+                        : R.string.clear_recordings_empty, Toast.LENGTH_SHORT).show();
+                calculateStorageUsed();
+            });
+        });
     }
 
     // ======= Public getter for settings from other activities =======

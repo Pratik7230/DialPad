@@ -605,6 +605,70 @@
                 android:layout_marginBottom="8dp"
                 android:elevation="2dp">
 
+                <!-- Voicemail: call it / open carrier voicemail settings -->
+                <LinearLayout
+                    android:id="@+id/rowVoicemail"
+                    android:layout_width="match_parent"
+                    android:layout_height="72dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_settings_icon_calls"
+                        android:layout_marginEnd="16dp">
+                        <ImageView
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_voicemail"
+                            android:tint="#FFFFFF"
+                            android:contentDescription="Voicemail" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Voicemail"
+                            android:textSize="16sp"
+                            android:textColor="@color/settings_text_primary"
+                            android:fontFamily="sans-serif" />
+                        <TextView
+                            android:id="@+id/tvVoicemailSub"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Call voicemail or change its settings"
+                            android:textSize="13sp"
+                            android:textColor="@color/settings_text_secondary"
+                            android:fontFamily="sans-serif" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:src="@drawable/ic_chevron_right"
+                        android:tint="@color/settings_text_secondary"
+                        android:contentDescription="Open" />
+                </LinearLayout>
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/settings_divider"
+                    android:layout_marginStart="72dp" />
+
                 <!-- Show Caller ID -->
                 <LinearLayout
                     android:id="@+id/rowCallerId"

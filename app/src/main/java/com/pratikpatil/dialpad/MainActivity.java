@@ -51,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_READ_CALL_LOG = 2;
     private static final int REQUEST_WRITE_CALL_LOG = 3;
     private static final int REQUEST_READ_CONTACTS = 4;
+    private static final int REQUEST_CALL_VOICEMAIL = 5;
     private static final int REQUEST_DEFAULT_DIALER = 100;
     private static final String TAG = "DialPad";
 
@@ -184,6 +185,7 @@ public class MainActivity extends AppCompatActivity {
             }
             if (itemId == R.id.nav_history) {
                 viewFlipper.setDisplayedChild(1); // Show history
+                CallNotifier.clearMissedCalls(this);
                 loadCallHistory();
                 return true;
             }
@@ -199,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
             }
             return true;
         });
+        openTabFromIntent(getIntent());
 
         // Delete last digit on click
         btnDelete.setOnClickListener(v -> {
@@ -210,6 +213,16 @@ public class MainActivity extends AppCompatActivity {
 
         if (keyZero != null) {
             keyZero.setOnLongClickListener(this::zeroLongClick);
+        }
+
+        // Long-press 1 on an empty dialpad calls voicemail (standard dialer gesture)
+        View keyOne = findViewById(R.id.keyOne);
+        if (keyOne != null) {
+            keyOne.setOnLongClickListener(v -> {
+                if (phoneNumber.length() > 0) return false; // normal "1" while typing
+                VoicemailHelper.callVoicemail(this, REQUEST_CALL_VOICEMAIL);
+                return true;
+            });
         }
 
         // Long press to clear all
@@ -246,16 +259,43 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        openTabFromIntent(intent);
+    }
+
+    /** Missed-call notification opens the app straight on the History tab. */
+    private void openTabFromIntent(Intent intent) {
+        if (CallNotifier.TAB_HISTORY.equals(CallNotifier.tabFrom(intent))) {
+            BottomNavigationView nav = findViewById(R.id.bottomNav);
+            nav.setSelectedItemId(R.id.nav_history);
+            intent.removeExtra(CallNotifier.EXTRA_OPEN_TAB);
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
-        // Request READ_PHONE_STATE if not yet granted
+        // User is looking at their history — the missed-call notification is no longer needed
+        if (viewFlipper.getDisplayedChild() == 1) {
+            CallNotifier.clearMissedCalls(this);
+        }
+
+        // Request phone-state + notification permissions if not yet granted
+        java.util.List<String> missing = new java.util.ArrayList<>();
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
                 != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{
-                            Manifest.permission.READ_PHONE_STATE,
-                            Manifest.permission.ANSWER_PHONE_CALLS
-                    }, 10);
+            missing.add(Manifest.permission.READ_PHONE_STATE);
+            missing.add(Manifest.permission.ANSWER_PHONE_CALLS);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            missing.add(Manifest.permission.POST_NOTIFICATIONS);
+        }
+        if (!missing.isEmpty()) {
+            ActivityCompat.requestPermissions(this, missing.toArray(new String[0]), 10);
         }
 
         // Auto-prompt to become default dialer on first launch
@@ -728,6 +768,10 @@ public class MainActivity extends AppCompatActivity {
                 loadContacts();
             } else {
                 Toast.makeText(this, R.string.permission_contacts_denied, Toast.LENGTH_SHORT).show();
+            }
+        } else if (requestCode == REQUEST_CALL_VOICEMAIL) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                VoicemailHelper.callVoicemail(this, REQUEST_CALL_VOICEMAIL);
             }
         } else if (requestCode == REQUEST_CALL_PHONE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

@@ -88,6 +88,12 @@ public class CallLogAdapter extends RecyclerView.Adapter<CallLogAdapter.ViewHold
                 holder.tvCallerName.setTextColor(
                         holder.itemView.getContext().getColor(R.color.missed_call_red));
                 break;
+            case CallLog.Calls.VOICEMAIL_TYPE:
+                holder.ivCallType.setImageResource(R.drawable.ic_voicemail);
+                holder.tvCallTypeLabel.setText(R.string.call_type_voicemail);
+                holder.tvCallerName.setTextColor(
+                        holder.itemView.getContext().getColor(R.color.number_text_color));
+                break;
             default:
                 holder.ivCallType.setImageResource(R.drawable.ic_call_incoming);
                 holder.tvCallTypeLabel.setText(R.string.call_type_unknown);

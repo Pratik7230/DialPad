@@ -44,6 +44,7 @@
     <string name="call_type_missed">Missed</string>
     <string name="call_type_rejected">Rejected</string>
     <string name="call_type_unknown">Unknown</string>
+    <string name="call_type_voicemail">Voicemail</string>
     <string name="no_call_history">No recent calls</string>
     <string name="no_call_history_subtitle">Your call history will appear here</string>
     <string name="permission_call_log_title">Call log permission needed</string>
@@ -101,8 +102,8 @@
     <string name="recording_format_m4a">M4A (Recommended)</string>
     <string name="recording_format_mp3">MP3</string>
     <string name="recording_format_wav">WAV (Lossless)</string>
-    <string name="setting_recording_storage">Storage Location</string>
-    <string name="recording_storage_default">Phone Storage / Recordings</string>
+    <string name="setting_recording_storage">Saved Recordings</string>
+    <string name="recording_storage_default">Music / DialPad Recordings</string>
     <string name="setting_auto_record">Auto-Record All Calls</string>
     <string name="setting_auto_record_sub">Automatically record every call</string>
     <string name="setting_recording_beep">Recording Beep Tone</string>
